@@ -15,10 +15,35 @@ bool physical_device_suitable(VkPhysicalDevice device) {
 	return true;
 }
 
+bool load_shader(const char* path, uint8_t** shader_data, size_t* shader_len) {
+	FILE* shader_file = fopen(path, "rb");
+	if (!shader_file)
+		return false;
+	
+	fseek(shader_file, 0, SEEK_END);
+	*shader_len = ftell(shader_file);
+	fseek(shader_file, 0, SEEK_SET);
+	if (*shader_len < 0)
+		return false;
+
+	*shader_data = malloc(*shader_len);
+	size_t index = 0;
+	for (int byte; (byte = fgetc(shader_file)) != EOF && index < *shader_len; index++)
+		(*shader_data)[index] = (uint8_t)byte;
+	
+	if (ferror(shader_file) || index < *shader_len)
+		return false;
+
+	fclose(shader_file);
+	return true;
+}
+
 typedef struct {
 	VkImage image;
 	VkImageView view;
 } Image;
+
+#define DEBUG
 
 int main(void) {
 	/*
@@ -45,6 +70,15 @@ int main(void) {
 	VkSwapchainKHR vk_swapchain;
 	uint32_t vk_swapchain_image_len = 0;
 	Image* vk_swapchain_images;
+	VkFramebuffer* vk_framebuffers;
+	VkPipelineLayout vk_pipeline_layout;
+	VkPipeline vk_pipeline;
+	VkRenderPass vk_renderpass;
+	VkCommandPool vk_command_pool;
+	VkCommandBuffer* vk_command_buffers;
+
+	VkSemaphore vk_render_semaphore;
+	VkSemaphore vk_present_semaphore;
 
 	VkDisplayKHR vk_display;
 	VkDisplayPropertiesKHR vk_display_properties;
@@ -65,6 +99,11 @@ int main(void) {
 	const char* vk_device_extensions[] = {
 		"VK_KHR_swapchain"
 	};
+	#ifdef DEBUG
+	const char* vk_validation_layers[] = {
+		"VK_LAYER_KHRONOS_validation"
+	};
+	#endif
 
 	VkApplicationInfo vk_appinfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -79,7 +118,12 @@ int main(void) {
 		.pApplicationInfo = &vk_appinfo,
 		.enabledExtensionCount = sizeof(vk_instance_extensions) / sizeof(*vk_instance_extensions),
 		.ppEnabledExtensionNames = vk_instance_extensions,
-		.enabledLayerCount = 0
+		#ifdef DEBUG
+			.enabledLayerCount = 1,
+			.ppEnabledLayerNames = vk_validation_layers
+		#else
+			.enabledLayerCount = 0,
+		#endif
 	};
 
 	if (vkCreateInstance(&vk_instance_info, NULL, &vk_instance) != VK_SUCCESS)
@@ -255,8 +299,7 @@ int main(void) {
 		.oldSwapchain = VK_NULL_HANDLE
 	};
 
-	VkResult result;
-	if ((result = vkCreateSwapchainKHR(vk_device, &vk_swapchain_info, NULL, &vk_swapchain)) != VK_SUCCESS)
+	if (vkCreateSwapchainKHR(vk_device, &vk_swapchain_info, NULL, &vk_swapchain) != VK_SUCCESS)
 		panic("Unable to create swapchain\nIs the display already in use by Xorg or a Wayland compositor?");
 
 	// Get the swapchain images
@@ -284,8 +327,293 @@ int main(void) {
 	}
 	free(swapchain_image_buffer);
 
+	// Create the graphics pipeline
 	
+	VkPipelineVertexInputStateCreateInfo vk_vertex_input_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.vertexBindingDescriptionCount = 0,
+		.vertexAttributeDescriptionCount = 0
+	};
+	VkPipelineInputAssemblyStateCreateInfo vk_input_assembly_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		.primitiveRestartEnable = VK_FALSE
+	};
+	VkViewport vk_viewport = {
+		.x = 0.0f,
+		.y = 0.0f,
+		.width = (float) vk_swapchain_extent.width,
+		.height = (float) vk_swapchain_extent.height,
+		.minDepth = 0.0f,
+		.maxDepth = 1.0f
+	};
+	VkRect2D vk_scissor = {
+		.offset = { 0 },
+		.extent = vk_swapchain_extent
+	};
+	VkPipelineViewportStateCreateInfo vk_viewport_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = 1,
+		.pViewports = &vk_viewport,
+		.scissorCount = 1,
+		.pScissors = &vk_scissor
+	};
+	VkPipelineRasterizationStateCreateInfo vk_raster_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		.depthClampEnable = VK_FALSE,
+		.rasterizerDiscardEnable = VK_FALSE,
+		.polygonMode = VK_POLYGON_MODE_FILL,
+		.lineWidth = 1.0f,
+		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.frontFace = VK_FRONT_FACE_CLOCKWISE,
+		.depthBiasEnable = VK_FALSE,
+	};
+	VkPipelineMultisampleStateCreateInfo vk_multisample_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		.sampleShadingEnable = VK_FALSE,
+		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
+	};
+	VkPipelineColorBlendAttachmentState vk_framebuffer_blend_state = {
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+		.blendEnable = VK_FALSE,
+	};
+	VkPipelineColorBlendStateCreateInfo vk_framebuffer_blend_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.logicOpEnable = VK_FALSE,
+		.attachmentCount = 1,
+		.pAttachments = &vk_framebuffer_blend_state
+	};
+	VkPipelineLayoutCreateInfo vk_layout_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+	};
+	if (vkCreatePipelineLayout(vk_device, &vk_layout_info, NULL, &vk_pipeline_layout) != VK_SUCCESS)
+		panic("Unable to create pipeline layout");
+
+	VkAttachmentDescription vk_framebuffer_attachment = {
+		.format = vk_surface_format.format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
+	VkAttachmentReference vk_framebuffer_attachment_reference = {
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	};
+	VkSubpassDescription vk_present_pass = {
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &vk_framebuffer_attachment_reference
+	};
+	VkSubpassDependency vk_present_pass_dependency = {
+		.srcSubpass = VK_SUBPASS_EXTERNAL,
+		.dstSubpass = 0,
+		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.srcAccessMask = 0,
+		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+	};
+
+	VkRenderPassCreateInfo vk_renderpass_info = {
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.attachmentCount = 1,
+		.pAttachments = &vk_framebuffer_attachment,
+		.subpassCount = 1,
+		.pSubpasses = &vk_present_pass,
+		.dependencyCount = 1,
+		.pDependencies = &vk_present_pass_dependency
+	};
+
+	if (vkCreateRenderPass(vk_device, &vk_renderpass_info, NULL, &vk_renderpass) != VK_SUCCESS)
+		panic("Unable to create renderpass");
+
+	// Load shaders
+	size_t vert_shader_len;
+	uint8_t* vert_shader;
+	size_t frag_shader_len;
+	uint8_t* frag_shader;
+
+	if (!load_shader("vert.spv", &vert_shader, &vert_shader_len))
+		panic("Failed to load vertex shader");
+	if (!load_shader("frag.spv", &frag_shader, &frag_shader_len))
+		panic("Failed to load fragment shader");
+
+	VkShaderModule vk_vert_shader;
+	VkShaderModule vk_frag_shader;
+
+	VkShaderModuleCreateInfo vk_vert_shader_info = {
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = vert_shader_len,
+		.pCode = (uint32_t*)vert_shader
+	};
+	if (vkCreateShaderModule(vk_device, &vk_vert_shader_info, NULL, &vk_vert_shader) != VK_SUCCESS)
+		panic("Unable to create vertex shader module");
+	VkShaderModuleCreateInfo vk_frag_shader_info = {
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = frag_shader_len,
+		.pCode = (uint32_t*)frag_shader
+	};
+	if (vkCreateShaderModule(vk_device, &vk_frag_shader_info, NULL, &vk_frag_shader) != VK_SUCCESS)
+		panic("Unable to create fragment shader module");
+	
+	VkPipelineShaderStageCreateInfo vk_vert_stage_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		.stage = VK_SHADER_STAGE_VERTEX_BIT,
+		.module = vk_vert_shader,
+		.pName = "main"
+	};
+	VkPipelineShaderStageCreateInfo vk_frag_stage_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+		.module = vk_frag_shader,
+		.pName = "main"
+	};
+	VkPipelineShaderStageCreateInfo vk_shader_stages[] = {vk_vert_stage_info, vk_frag_stage_info};
+
+	VkGraphicsPipelineCreateInfo vk_pipeline_info = {
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.stageCount = 2,
+		.pStages = vk_shader_stages,
+		.pVertexInputState = &vk_vertex_input_info,
+		.pInputAssemblyState = &vk_input_assembly_info,
+		.pViewportState = &vk_viewport_info,
+		.pRasterizationState = &vk_raster_info,
+		.pMultisampleState = &vk_multisample_info,
+		.pDepthStencilState = NULL,
+		.pColorBlendState = &vk_framebuffer_blend_info,
+		.pDynamicState = NULL,
+		.layout = vk_pipeline_layout,
+		.renderPass = vk_renderpass,
+		.subpass = 0,
+		.basePipelineHandle = VK_NULL_HANDLE,
+		.basePipelineIndex = -1,
+	};
+	if (vkCreateGraphicsPipelines(vk_device, VK_NULL_HANDLE, 1, &vk_pipeline_info, NULL, &vk_pipeline) != VK_SUCCESS)
+		panic("Unable to create graphics pipeline");
+
+	// Create framebuffers
+	vk_framebuffers = malloc(sizeof(VkFramebuffer) * vk_swapchain_image_len);
+	VkFramebufferCreateInfo vk_framebuffer_info = {
+		.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+		.renderPass = vk_renderpass,
+		.attachmentCount = 1,
+		.width = vk_swapchain_extent.width,
+		.height = vk_swapchain_extent.height,
+		.layers = 1
+	};
+	for (int index = 0; index < vk_swapchain_image_len; index++) {
+		vk_framebuffer_info.pAttachments = &vk_swapchain_images[index].view;
+		if (vkCreateFramebuffer(vk_device, &vk_framebuffer_info, NULL, &vk_framebuffers[index]) != VK_SUCCESS)
+			panic("Unable to create framebuffer");
+	}
+
+	// Create command buffers
+	VkCommandPoolCreateInfo vk_command_pool_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.queueFamilyIndex = vk_queue_family,
+	};
+	if (vkCreateCommandPool(vk_device, &vk_command_pool_info, NULL, &vk_command_pool) != VK_SUCCESS)
+		panic("Unable to create command pool");
+
+	vk_command_buffers = malloc(sizeof(VkCommandBuffer) * vk_swapchain_image_len);
+	VkCommandBufferAllocateInfo vk_command_buffer_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = vk_command_pool,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandBufferCount = vk_swapchain_image_len
+	};
+	if (vkAllocateCommandBuffers(vk_device, &vk_command_buffer_info, vk_command_buffers) != VK_SUCCESS)
+		panic("Unable to allocate command buffers");
+
+	// Create semaphores
+	VkSemaphoreCreateInfo vk_semaphore_info = {
+		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+	};
+	if (
+		vkCreateSemaphore(vk_device, &vk_semaphore_info, NULL, &vk_render_semaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(vk_device, &vk_semaphore_info, NULL, &vk_present_semaphore) != VK_SUCCESS
+	) panic("Unable to create semaphores");
+
+
+	// DRAW!!!
+	bool running = true;
+	while (running) {
+	uint32_t image_index;
+	vkAcquireNextImageKHR(vk_device, vk_swapchain, UINT64_MAX, vk_render_semaphore, VK_NULL_HANDLE, &image_index);
+
+	VkCommandBufferBeginInfo vk_command_begin_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
+	};
+	if (vkBeginCommandBuffer(vk_command_buffers[image_index], &vk_command_begin_info) != VK_SUCCESS)
+		panic("Unable to start command buffer");
+
+	VkClearValue vk_clear_values[] = {
+		{ 0.0f, 1.0f, 0.0f, 1.0f }
+	};
+	VkRenderPassBeginInfo vk_renderpass_begin_info = {
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+		.renderPass = vk_renderpass,
+		.framebuffer = vk_framebuffers[image_index],
+		.renderArea = {
+			.offset = { 0, 0 },
+			.extent = vk_swapchain_extent
+		},
+		.clearValueCount = 1,
+		.pClearValues = vk_clear_values,
+	};
+	vkCmdBeginRenderPass(vk_command_buffers[image_index], &vk_renderpass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBindPipeline(vk_command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline);
+	vkCmdEndRenderPass(vk_command_buffers[image_index]);
+
+
+	if (vkEndCommandBuffer(vk_command_buffers[image_index]) != VK_SUCCESS)
+		panic("Unable to complete command buffer");
+
+	VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	VkSubmitInfo vk_submit_info = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &vk_render_semaphore,
+		.pWaitDstStageMask = wait_stages,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &vk_command_buffers[image_index],
+		.signalSemaphoreCount = 1,
+		.pSignalSemaphores = &vk_present_semaphore
+	};
+
+	if (vkQueueSubmit(vk_queue, 1, &vk_submit_info, VK_NULL_HANDLE) != VK_SUCCESS)
+		panic("Unable to submit render queue");
+	// Present
+	VkPresentInfoKHR vk_present_info = {
+		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &vk_present_semaphore,
+		.swapchainCount = 1,
+		.pSwapchains = &vk_swapchain,
+		.pImageIndices = &image_index
+	};
+	if (vkQueuePresentKHR(vk_queue, &vk_present_info) != VK_SUCCESS)
+		panic("Unable to present the swapchain");
+
+	}
+
 	// Clean up
+	vkDeviceWaitIdle(vk_device);
+	vkDestroySemaphore(vk_device, vk_render_semaphore, NULL);
+	vkDestroySemaphore(vk_device, vk_present_semaphore, NULL);
+	vkDestroyCommandPool(vk_device, vk_command_pool, NULL);
+	free(vk_command_buffers);
+
+	for (int index = 0; index < vk_swapchain_image_len; index++)
+		vkDestroyFramebuffer(vk_device, vk_framebuffers[index], NULL);
+	vkDestroyPipeline(vk_device, vk_pipeline, NULL);
+	vkDestroyPipelineLayout(vk_device, vk_pipeline_layout, NULL);
+	vkDestroyShaderModule(vk_device, vk_vert_shader, NULL);
+	vkDestroyShaderModule(vk_device, vk_frag_shader, NULL);
+	vkDestroyRenderPass(vk_device, vk_renderpass, NULL);
 	for (int index = 0; index < vk_swapchain_image_len; index++)
 		vkDestroyImageView(vk_device, vk_swapchain_images[index].view, NULL);
 	free(vk_swapchain_images);

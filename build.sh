@@ -1,3 +1,3 @@
 #!/bin/sh
 
-gcc -std=c11 wayvk.c -lwayland-server -lvulkan -o target/wayvk
+gcc -std=c11 -Wall -g wayvk.c -lwayland-server -lvulkan -o target/wayvk
