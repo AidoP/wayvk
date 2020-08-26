@@ -15,6 +15,11 @@ bool physical_device_suitable(VkPhysicalDevice device) {
 	return true;
 }
 
+typedef struct {
+	VkImage image;
+	VkImageView view;
+} Image;
+
 int main(void) {
 	/*
 	uint32_t ext_count = 0;
@@ -38,6 +43,9 @@ int main(void) {
 	VkDevice vk_device;
 	VkSurfaceKHR vk_surface;
 	VkSwapchainKHR vk_swapchain;
+	uint32_t vk_swapchain_image_len = 0;
+	Image* vk_swapchain_images;
+
 	VkDisplayKHR vk_display;
 	VkDisplayPropertiesKHR vk_display_properties;
 	uint32_t vk_display_plane;
@@ -135,7 +143,6 @@ int main(void) {
 	VkDisplayPropertiesKHR* displays = malloc(sizeof(VkDisplayPropertiesKHR) * display_len);
 	vkGetPhysicalDeviceDisplayPropertiesKHR(vk_physical_device, &display_len, displays);
 	for (int index = 0; index < display_len; index++) {
-		printf("Using display: %s\n", displays[index].displayName);
 		vk_display = displays[index].display;
 		vk_display_properties = displays[index];
 		break;
@@ -252,7 +259,36 @@ int main(void) {
 	if ((result = vkCreateSwapchainKHR(vk_device, &vk_swapchain_info, NULL, &vk_swapchain)) != VK_SUCCESS)
 		panic("Unable to create swapchain\nIs the display already in use by Xorg or a Wayland compositor?");
 
+	// Get the swapchain images
+	vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &vk_swapchain_image_len, NULL);
+	vk_swapchain_images = malloc(sizeof(Image) * vk_swapchain_image_len);
+	VkImage* swapchain_image_buffer = malloc(sizeof(VkImage) * vk_swapchain_image_len);
+	vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &vk_swapchain_image_len, swapchain_image_buffer);
+	VkImageViewCreateInfo vk_image_view_info = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = vk_surface_format.format,
+		.components = { VK_COMPONENT_SWIZZLE_IDENTITY },
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		}
+	};
+	for (int index = 0; index < vk_swapchain_image_len; index++) {
+		vk_image_view_info.image = vk_swapchain_images[index].image = swapchain_image_buffer[index];
+		if (vkCreateImageView(vk_device, &vk_image_view_info, NULL, &vk_swapchain_images[index].view) != VK_SUCCESS)
+			panic("Unable to create swapchain image view");
+	}
+	free(swapchain_image_buffer);
 
+	
+	// Clean up
+	for (int index = 0; index < vk_swapchain_image_len; index++)
+		vkDestroyImageView(vk_device, vk_swapchain_images[index].view, NULL);
+	free(vk_swapchain_images);
 	vkDestroySwapchainKHR(vk_device, vk_swapchain, NULL);
 	vkDestroySurfaceKHR(vk_instance, vk_surface, NULL);
 	vkDestroyDevice(vk_device, NULL);
