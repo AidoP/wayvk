@@ -6,6 +6,8 @@
 
 #include "util.h"
 
+#define DEBUG
+
 const char* vk_instance_extensions[] = {
 	"VK_KHR_surface",
 	"VK_KHR_display",
@@ -509,8 +511,6 @@ void vk_cleanup(Vulkan* vk) {
 }
 
 void vk_draw(Vulkan* vk) {
-	bool running = true;
-	while (running) {
 	uint32_t image_index;
 	vkAcquireNextImageKHR(vk->device, vk->swapchain, UINT64_MAX, vk->render_semaphore, VK_NULL_HANDLE, &image_index);
 
@@ -521,7 +521,7 @@ void vk_draw(Vulkan* vk) {
 		panic("Unable to start command buffer");
 
 	VkClearValue vk_clear_values[] = {
-		{ 0.0f, 1.0f, 0.0f, 1.0f }
+		{ { { 0.0f, 0.0f, 0.0f, 1.0f } } }
 	};
 	VkRenderPassBeginInfo vk_renderpass_begin_info = {
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -536,9 +536,8 @@ void vk_draw(Vulkan* vk) {
 	};
 	vkCmdBeginRenderPass(vk->command_buffers[image_index], &vk_renderpass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, vk->pipeline);
+	vkCmdDraw(vk->command_buffers[image_index], 3, 1, 0, 0);
 	vkCmdEndRenderPass(vk->command_buffers[image_index]);
-
-
 	if (vkEndCommandBuffer(vk->command_buffers[image_index]) != VK_SUCCESS)
 		panic("Unable to complete command buffer");
 
@@ -553,10 +552,9 @@ void vk_draw(Vulkan* vk) {
 		.signalSemaphoreCount = 1,
 		.pSignalSemaphores = &vk->present_semaphore
 	};
-
 	if (vkQueueSubmit(vk->queue, 1, &vk_submit_info, VK_NULL_HANDLE) != VK_SUCCESS)
 		panic("Unable to submit render queue");
-	// Present
+
 	VkPresentInfoKHR vk_present_info = {
 		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 		.waitSemaphoreCount = 1,
@@ -567,6 +565,4 @@ void vk_draw(Vulkan* vk) {
 	};
 	if (vkQueuePresentKHR(vk->queue, &vk_present_info) != VK_SUCCESS)
 		panic("Unable to present the swapchain");
-
-	}
 }
