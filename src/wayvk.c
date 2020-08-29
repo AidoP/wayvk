@@ -1,29 +1,27 @@
-#include <wayland-util.h>
-#include <wayland-server.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "vk.h"
+#include "wl.h"
+
 
 int main(void) {
-	Vulkan vk = vk_setup();
-	
-	struct wl_display* display = wl_display_create();
-	wl_display_add_socket_auto(display);
-	
-	struct wl_event_loop* event_loop = wl_display_get_event_loop(display);
+	// Vulkan vk = vk_setup();
+	Wayland wl = wl_setup();
+
+	//wl_display_run(wl.display);
 
 	bool running = true;
 	while (running) {
-		if (wl_event_loop_dispatch(event_loop, 0))
+		if (wl_event_loop_dispatch(wl.event_loop, 0))
 			running = false;
-		wl_display_flush_clients(display);
+		wl_display_flush_clients(wl.display);
 
-		vk_draw(&vk);
+		// vk_draw(&vk);
 	}
 
-	wl_display_destroy(display);
-	vk_cleanup(&vk);
+	wl_cleanup(&wl);
+	// vk_cleanup(&vk);
 
 	return 0;
 }

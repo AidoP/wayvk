@@ -46,4 +46,4 @@ typedef struct vk {
 
 Vulkan vk_setup(void);
 void vk_cleanup(Vulkan*);
-void vk_draw(Vulkan* vk);
+void vk_draw(Vulkan*);

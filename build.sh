@@ -3,4 +3,13 @@
 for shader in shader/*.frag shader/*.vert; do
 	glslc "$shader" -o "${shader}.spv"
 done
-gcc -std=c11 -Wall -g src/*.c -lwayland-server -lvulkan -o target/wayvk
+
+proto_wl='/usr/share/wayland/wayland.xml'
+proto_xdg_shell='/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml'
+wayland-scanner private-code $proto_wl src/protocol/wayland.c
+wayland-scanner server-header $proto_wl src/protocol/wayland.h
+
+wayland-scanner private-code $proto_xdg_shell src/protocol/xdg_shell.c
+wayland-scanner server-header $proto_xdg_shell src/protocol/xdg_shell.h
+
+gcc -std=c11 -Wall -g src/*.c src/protocol/*.c -lwayland-server -lvulkan -o target/wayvk
