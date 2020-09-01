@@ -248,7 +248,6 @@ static void destroy_xdg_surface(struct wl_resource* resource) {
 		free(xdg_surface_data);
 	}
 	wl_resource_set_user_data(resource, NULL);
-
 }
 static int xdg_surface_configure_timer(void* user_data) {
 	struct xdg_surface* xdg_surface_data = (struct xdg_surface*)user_data;
@@ -265,6 +264,7 @@ static void xdg_surface_get_toplevel(struct wl_client* client, struct wl_resourc
 	struct xdg_toplevel_buffered_state default_state = {};
 	xdg_toplevel_data->pending = default_state;
 	xdg_toplevel_data->current = default_state;
+	xdg_toplevel_data->xdg_surface = resource;
 	wl_resource_set_implementation(xdg_toplevel_resource, &implement_xdg_toplevel, xdg_toplevel_data, destroy_xdg_toplevel);
 }
 static const struct xdg_surface_interface implement_xdg_surface = {
@@ -286,7 +286,7 @@ static void xdg_wm_base_get_xdg_surface(struct wl_client* client, struct wl_reso
 	xdg_surface_data->resource = xdg_surface_resource;
 	xdg_surface_data->configure_timer = wl_event_loop_add_timer(wl_display_get_event_loop(wl_client_get_display(client)), xdg_surface_configure_timer, xdg_surface_data);
 	wl_event_source_timer_update(xdg_surface_data->configure_timer, CONFIGURE_DELAY);
-	wl_resource_set_implementation(xdg_surface_resource, &implement_xdg_surface, NULL, destroy_xdg_surface);
+	wl_resource_set_implementation(xdg_surface_resource, &implement_xdg_surface, xdg_surface_data, destroy_xdg_surface);
 }
 static void xdg_wm_base_pong(struct wl_client* client, struct wl_resource* resource, uint32_t serial) {
 	printf("Client responded to ping for serial %i\n", serial);
