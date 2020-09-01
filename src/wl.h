@@ -7,12 +7,10 @@ typedef struct wl {
 	struct wl_event_loop* event_loop;
 
 	struct wl_global* global_compositor;
+	struct wl_global* global_output;
 	struct wl_global* global_shm;
 	struct wl_global* global_seat;
 	struct wl_global* global_data_device_manager;
-	struct wl_global* global_shell;
-	struct wl_global* global_surface;
-	struct wl_global* global_xdg_surface;
 	struct wl_global* global_xdg_wm_base;
 } Wayland;
 

@@ -12,4 +12,4 @@ wayland-scanner server-header $proto_wl src/protocol/wayland.h
 wayland-scanner private-code $proto_xdg_shell src/protocol/xdg_shell.c
 wayland-scanner server-header $proto_xdg_shell src/protocol/xdg_shell.h
 
-gcc -std=c11 -Wall -g src/*.c src/protocol/*.c -lwayland-server -lvulkan -o target/wayvk
+gcc -std=c11 -Wall -Werror -g src/*.c src/protocol/*.c -lwayland-server -lvulkan -o target/wayvk
