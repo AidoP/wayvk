@@ -226,11 +226,10 @@ Vulkan vk_setup(void) {
 	VkPresentModeKHR* present_modes = malloc(sizeof(VkPresentModeKHR) * present_mode_len);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(vk.physical_device, vk.surface, &present_mode_len, present_modes);
 	for (int index = 0; index < present_mode_len; index++) {
-		/* TODO: MAILBOX is broken but would be the best
 		if (present_modes[index] == VK_PRESENT_MODE_MAILBOX_KHR) {
 			vk.present_mode = present_modes[index];
 			break;
-		}*/
+		}
 	}
 	free(present_modes);
 
