@@ -1,7 +1,20 @@
 #include "term.h"
 #include "util.h"
 
-static struct session term_setup(void* data, Vulkan* vk) {
+#include <stdlib.h>
+#include <stdio.h>
+
+struct term_data {
+	float colr;
+	float colg;
+	float colb;
+};
+
+static struct session term_setup(void** data, Vulkan* vk) {
+	*data = malloc(sizeof(struct term_data));
+	((struct term_data*)*data)->colr = (float)(rand() % 1000) / 1000.0;
+	((struct term_data*)*data)->colg = (float)(rand() % 1000) / 1000.0;
+	((struct term_data*)*data)->colb = (float)(rand() % 1000) / 1000.0;
     struct session session;
 	
 	// Create the graphics pipeline
@@ -130,6 +143,7 @@ static struct session term_setup(void* data, Vulkan* vk) {
 }
 
 static void term_cleanup(void* data, struct session* session, Vulkan* vk) {
+	vkQueueWaitIdle(vk->queue);
 	vkDeviceWaitIdle(vk->device);
 	vkDestroyPipeline(vk->device, session->pipeline, NULL);
 	vkDestroyPipelineLayout(vk->device, session->pipeline_layout, NULL);
@@ -146,13 +160,20 @@ static void term_hidden(void* data, struct session* session, Vulkan* vk) {
 }
 
 static void term_update(void* data, struct session* session, Vulkan* vk) {
+	vk->current_inflight = (vk->current_inflight + 1) % VK_MAX_INFLIGHT;
+	InFlight* inflight = &vk->inflight[vk->current_inflight];
+
+	vkWaitForFences(vk->device, 1, &inflight->fence, VK_TRUE, UINT64_MAX);
+	vkResetFences(vk->device, 1, &inflight->fence);
+
     uint32_t image_index;
-	VkResult vk_result = vkAcquireNextImageKHR(vk->device, vk->swapchain, 0, vk->render_semaphore, VK_NULL_HANDLE, &image_index);
+	VkResult vk_result = vkAcquireNextImageKHR(vk->device, vk->swapchain, UINT64_MAX, inflight->render_semaphore, VK_NULL_HANDLE, &image_index);
 	switch (vk_result) {
 		case VK_SUCCESS:
 			break;
 		case VK_TIMEOUT:
 		case VK_NOT_READY:
+			panic("Not Ready");
 			return;
 		case VK_SUBOPTIMAL_KHR:
 			TODO
@@ -167,7 +188,7 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 		panic("Unable to start command buffer");
 
 	VkClearValue vk_clear_values[] = {
-		{ { { 0.0f, 0.0f, 0.0f, 1.0f } } }
+		{ { { ((struct term_data*)data)->colr, ((struct term_data*)data)->colg, ((struct term_data*)data)->colb, 1.0f } } }
 	};
 	VkRenderPassBeginInfo vk_renderpass_begin_info = {
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -191,20 +212,20 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 	VkSubmitInfo vk_submit_info = {
 		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &vk->render_semaphore,
+		.pWaitSemaphores = &inflight->render_semaphore,
 		.pWaitDstStageMask = wait_stages,
 		.commandBufferCount = 1,
 		.pCommandBuffers = &vk->command_buffers[image_index],
 		.signalSemaphoreCount = 1,
-		.pSignalSemaphores = &vk->present_semaphore
+		.pSignalSemaphores = &inflight->present_semaphore
 	};
-	if (vkQueueSubmit(vk->queue, 1, &vk_submit_info, VK_NULL_HANDLE) != VK_SUCCESS)
+	if (vkQueueSubmit(vk->queue, 1, &vk_submit_info, inflight->fence) != VK_SUCCESS)
 		panic("Unable to submit render queue");
 
 	VkPresentInfoKHR vk_present_info = {
 		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &vk->present_semaphore,
+		.pWaitSemaphores = &inflight->present_semaphore,
 		.swapchainCount = 1,
 		.pSwapchains = &vk->swapchain,
 		.pImageIndices = &image_index

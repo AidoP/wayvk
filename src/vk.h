@@ -9,6 +9,14 @@ typedef struct {
 	VkImageView view;
 } Image;
 
+#define VK_MAX_INFLIGHT 2
+
+typedef struct vk_inflight {
+	VkSemaphore render_semaphore;
+	VkSemaphore present_semaphore;
+	VkFence fence;
+} InFlight;
+
 typedef struct vk {
 	VkInstance instance;
 	VkPhysicalDevice physical_device;
@@ -25,8 +33,8 @@ typedef struct vk {
 	VkCommandPool command_pool;
 	VkCommandBuffer* command_buffers;
 
-	VkSemaphore render_semaphore;
-	VkSemaphore present_semaphore;
+	InFlight inflight[VK_MAX_INFLIGHT];
+	uint_fast8_t current_inflight;
 
 	VkDisplayKHR display;
 	VkDisplayPropertiesKHR display_properties;
@@ -43,5 +51,8 @@ typedef struct vk {
 
 Vulkan vk_setup(void);
 void vk_cleanup(Vulkan*);
+
+InFlight vk_inflight_setup(Vulkan*);
+void vk_inflight_cleanup(Vulkan*, InFlight*);
 
 bool load_shader(const char* path, uint8_t** shader_data, size_t* shader_len);

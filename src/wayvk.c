@@ -42,12 +42,26 @@ enum keys {
 	KEY_LCTRL = 29,
 	KEY_SHIFT = 42,
 	KEY_LALT = 56,
+
+	KEY_F1 = 59,
+	KEY_F2 = 60,
+	KEY_F3 = 61,
+	KEY_F4 = 62,
+	KEY_F5 = 63,
+	KEY_F6 = 64,
+	KEY_F7 = 65,
+	KEY_F8 = 66,
+	KEY_F9 = 67,
+	KEY_F10 = 68,
+
 	KEY_RCTRL = 97,
 	KEY_RALT = 100,
 	KEY_CMD = 125,
 };
 
 int main(void) {
+	srand(17);
+
 	Vulkan vk = vk_setup();
 	Wayland wl = wl_setup();
 	struct udev* udev = udev_new();
@@ -59,12 +73,14 @@ int main(void) {
 
 	SessionHandler sessions[] = {
 		term_session_handler,
-		term_session_handler
+		term_session_handler,
+		term_session_handler,
 	};
+	#define sessions_len (sizeof(sessions) / sizeof(SessionHandler))
 	uint_fast8_t active_session = 0;
 
 	// Initialise all the sessions
-	for (size_t index = 0; index < sizeof(sessions) / sizeof(SessionHandler); index++)
+	for (size_t index = 0; index < sessions_len; index++)
 		session_setup(&vk ,&sessions[index]);
 
 	//wl_display_run(wl.display);
@@ -123,6 +139,23 @@ int main(void) {
 							if (key_modifiers == (MODIFIER_SHIFT | MODKEY)) {
 								running = false;
 							}
+							break;
+						case KEY_F1:
+						case KEY_F2:
+						case KEY_F3:
+						case KEY_F4:
+						case KEY_F5:
+						case KEY_F6:
+						case KEY_F7:
+						case KEY_F8:
+						case KEY_F9:
+						case KEY_F10:
+							if (key_modifiers == MODKEY) {
+								printf("Switching to %i out of %li\n", key_code - KEY_F1, sessions_len);
+								uint_fast8_t session = key_code - KEY_F1;
+								if (session < sessions_len)
+									active_session = session;
+							}
 						default:
 							break;
 					}
@@ -145,7 +178,7 @@ int main(void) {
 
 
 	// Clean up all the sessions
-	for (size_t index = 0; index < sizeof(sessions) / sizeof(SessionHandler); index++)
+	for (size_t index = 0; index < sessions_len; index++)
 		session_cleanup(&vk, &sessions[index]);
 	wl_cleanup(&wl);
 	vk_cleanup(&vk);

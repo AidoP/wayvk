@@ -53,6 +53,7 @@ Vulkan vk_setup(void) {
 	vk.physical_device = VK_NULL_HANDLE;
 	vk.swapchain_image_len = 0;
 	vk.present_mode = VK_PRESENT_MODE_FIFO_KHR;
+	vk.current_inflight = 0;
 
 	VkApplicationInfo vk_appinfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -192,6 +193,12 @@ Vulkan vk_setup(void) {
 	if (vkCreateDisplayPlaneSurfaceKHR(vk.instance, &vk_surface_info, NULL, &vk.surface) != VK_SUCCESS)
 		panic("Unable to create surface");
 
+	VkBool32 is_supported;
+	if (vkGetPhysicalDeviceSurfaceSupportKHR(vk.physical_device, vk.queue_family, vk.surface, &is_supported) != VK_SUCCESS)
+		panic("Unable to determine if the physical device supports a visible surface");
+	if (!is_supported)
+		panic("Visible surface is unsupported by the physical device");
+
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk.physical_device, vk.surface, &vk.surface_capabilities);
 	
 	// Get supported surface formats
@@ -220,10 +227,11 @@ Vulkan vk_setup(void) {
 	VkPresentModeKHR* present_modes = malloc(sizeof(VkPresentModeKHR) * present_mode_len);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(vk.physical_device, vk.surface, &present_mode_len, present_modes);
 	for (int index = 0; index < present_mode_len; index++) {
+		/* TODO: MAILBOX is broken but would be the best
 		if (present_modes[index] == VK_PRESENT_MODE_MAILBOX_KHR) {
 			vk.present_mode = present_modes[index];
 			break;
-		}
+		}*/
 	}
 	free(present_modes);
 
@@ -340,39 +348,36 @@ Vulkan vk_setup(void) {
 	// Create command buffers
 	VkCommandPoolCreateInfo vk_command_pool_info = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
 		.queueFamilyIndex = vk.queue_family,
 	};
 	if (vkCreateCommandPool(vk.device, &vk_command_pool_info, NULL, &vk.command_pool) != VK_SUCCESS)
 		panic("Unable to create command pool");
 
-	vk.command_buffers = malloc(sizeof(VkCommandBuffer) * vk.swapchain_image_len);
 	VkCommandBufferAllocateInfo vk_command_buffer_info = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 		.commandPool = vk.command_pool,
 		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 		.commandBufferCount = vk.swapchain_image_len
 	};
+	vk.command_buffers = malloc(sizeof(VkCommandBuffer) * vk.swapchain_image_len);
 	if (vkAllocateCommandBuffers(vk.device, &vk_command_buffer_info, vk.command_buffers) != VK_SUCCESS)
 		panic("Unable to allocate command buffers");
 
-	// Create semaphores
-	VkSemaphoreCreateInfo vk_semaphore_info = {
-		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
-	};
-	if (
-		vkCreateSemaphore(vk.device, &vk_semaphore_info, NULL, &vk.render_semaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(vk.device, &vk_semaphore_info, NULL, &vk.present_semaphore) != VK_SUCCESS
-	) panic("Unable to create semaphores");
+	// Create in-flight synchronization primitives
+	for (uint_fast8_t index = 0; index < VK_MAX_INFLIGHT; index++)
+		vk.inflight[index] = vk_inflight_setup(&vk);
 
 	return vk;
 }
 
 void vk_cleanup(Vulkan* vk) {
 	vkDeviceWaitIdle(vk->device);
-	vkDestroySemaphore(vk->device, vk->render_semaphore, NULL);
-	vkDestroySemaphore(vk->device, vk->present_semaphore, NULL);
-	vkDestroyCommandPool(vk->device, vk->command_pool, NULL);
+	for (uint_fast8_t index = 0; index < VK_MAX_INFLIGHT; index++)
+		vk_inflight_cleanup(vk, &vk->inflight[index]);
+	vkFreeCommandBuffers(vk->device, vk->command_pool, vk->swapchain_image_len, vk->command_buffers);
 	free(vk->command_buffers);
+	vkDestroyCommandPool(vk->device, vk->command_pool, NULL);
 
 	for (int index = 0; index < vk->swapchain_image_len; index++)
 		vkDestroyFramebuffer(vk->device, vk->framebuffers[index], NULL);
@@ -384,4 +389,33 @@ void vk_cleanup(Vulkan* vk) {
 	vkDestroySurfaceKHR(vk->instance, vk->surface, NULL);
 	vkDestroyDevice(vk->device, NULL);
 	vkDestroyInstance(vk->instance, NULL);
+}
+
+InFlight vk_inflight_setup(Vulkan* vk) {
+	InFlight inflight;
+
+	// Create semaphores
+	VkSemaphoreCreateInfo vk_semaphore_info = {
+		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+	};
+	if (
+		vkCreateSemaphore(vk->device, &vk_semaphore_info, NULL, &inflight.render_semaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(vk->device, &vk_semaphore_info, NULL, &inflight.present_semaphore) != VK_SUCCESS
+	) panic("Unable to create semaphores");
+
+	// Create fences
+	VkFenceCreateInfo vk_fence_info = {
+		.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		.flags = VK_FENCE_CREATE_SIGNALED_BIT,
+	};
+	if (vkCreateFence(vk->device, &vk_fence_info, NULL, &inflight.fence) != VK_SUCCESS)
+		panic("Unable to create fence");
+
+	return inflight;
+}
+
+void vk_inflight_cleanup(Vulkan* vk, InFlight* inflight) {
+	vkDestroySemaphore(vk->device, inflight->render_semaphore, NULL);
+	vkDestroySemaphore(vk->device, inflight->present_semaphore, NULL);
+	vkDestroyFence(vk->device, inflight->fence, NULL);
 }
