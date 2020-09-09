@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <stdbool.h>
 
 /// An image with a view
 typedef struct {
@@ -11,6 +12,7 @@ typedef struct {
 typedef struct vk {
 	VkInstance instance;
 	VkPhysicalDevice physical_device;
+	VkPhysicalDeviceMemoryProperties physical_device_memory_properties;
 	uint32_t queue_family;
 	VkQueue queue;
 	VkDevice device;
@@ -19,17 +21,12 @@ typedef struct vk {
 	uint32_t swapchain_image_len;
 	Image* swapchain_images;
 	VkFramebuffer* framebuffers;
-	VkPipelineLayout pipeline_layout;
-	VkPipeline pipeline;
 	VkRenderPass renderpass;
 	VkCommandPool command_pool;
 	VkCommandBuffer* command_buffers;
 
 	VkSemaphore render_semaphore;
 	VkSemaphore present_semaphore;
-
-	VkShaderModule vert_shader;
-	VkShaderModule frag_shader;
 
 	VkDisplayKHR display;
 	VkDisplayPropertiesKHR display_properties;
@@ -46,4 +43,5 @@ typedef struct vk {
 
 Vulkan vk_setup(void);
 void vk_cleanup(Vulkan*);
-void vk_draw(Vulkan*);
+
+bool load_shader(const char* path, uint8_t** shader_data, size_t* shader_len);

@@ -52,11 +52,15 @@ static void xdg_toplevel_set_app_id(struct wl_client* client, struct wl_resource
 	struct xdg_surface* xdg_surface_data = wl_resource_get_user_data(xdg_toplevel_data->xdg_surface);
 	wl_event_source_timer_update(xdg_surface_data->configure_timer, CONFIGURE_DELAY);
 }
+static void xdg_toplevel_set_maximized(struct wl_client* client, struct wl_resource* resource) {
+	//TODO
+}
 static const struct xdg_toplevel_interface implement_xdg_toplevel = {
 	.destroy = xdg_toplevel_destroy,
 	.set_parent = xdg_toplevel_set_parent,
 	.set_title = xdg_toplevel_set_title,
 	.set_app_id = xdg_toplevel_set_app_id,
+	.set_maximized = xdg_toplevel_set_maximized
 };
 
 

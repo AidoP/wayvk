@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "util.h"
 
@@ -116,6 +115,7 @@ Vulkan vk_setup(void) {
 		.pQueuePriorities = &vk_queue_priorities
 	};
 	VkPhysicalDeviceFeatures vk_device_features = { VK_FALSE };
+	vkGetPhysicalDeviceMemoryProperties(vk.physical_device, &vk.physical_device_memory_properties);
 
 	VkDeviceCreateInfo vk_device_info = {
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -277,67 +277,7 @@ Vulkan vk_setup(void) {
 	}
 	free(swapchain_image_buffer);
 
-	// Create the graphics pipeline
-	
-	VkPipelineVertexInputStateCreateInfo vk_vertex_input_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-		.vertexBindingDescriptionCount = 0,
-		.vertexAttributeDescriptionCount = 0
-	};
-	VkPipelineInputAssemblyStateCreateInfo vk_input_assembly_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-		.primitiveRestartEnable = VK_FALSE
-	};
-	VkViewport vk_viewport = {
-		.x = 0.0f,
-		.y = 0.0f,
-		.width = (float) vk.swapchain_extent.width,
-		.height = (float) vk.swapchain_extent.height,
-		.minDepth = 0.0f,
-		.maxDepth = 1.0f
-	};
-	VkRect2D vk_scissor = {
-		.offset = { 0 },
-		.extent = vk.swapchain_extent
-	};
-	VkPipelineViewportStateCreateInfo vk_viewport_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-		.viewportCount = 1,
-		.pViewports = &vk_viewport,
-		.scissorCount = 1,
-		.pScissors = &vk_scissor
-	};
-	VkPipelineRasterizationStateCreateInfo vk_raster_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-		.depthClampEnable = VK_FALSE,
-		.rasterizerDiscardEnable = VK_FALSE,
-		.polygonMode = VK_POLYGON_MODE_FILL,
-		.lineWidth = 1.0f,
-		.cullMode = VK_CULL_MODE_BACK_BIT,
-		.frontFace = VK_FRONT_FACE_CLOCKWISE,
-		.depthBiasEnable = VK_FALSE,
-	};
-	VkPipelineMultisampleStateCreateInfo vk_multisample_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-		.sampleShadingEnable = VK_FALSE,
-		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
-	};
-	VkPipelineColorBlendAttachmentState vk_framebuffer_blend_state = {
-		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-		.blendEnable = VK_FALSE,
-	};
-	VkPipelineColorBlendStateCreateInfo vk_framebuffer_blend_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-		.logicOpEnable = VK_FALSE,
-		.attachmentCount = 1,
-		.pAttachments = &vk_framebuffer_blend_state
-	};
-	VkPipelineLayoutCreateInfo vk_layout_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-	};
-	if (vkCreatePipelineLayout(vk.device, &vk_layout_info, NULL, &vk.pipeline_layout) != VK_SUCCESS)
-		panic("Unable to create pipeline layout");
+	// Create the main renderpass
 
 	VkAttachmentDescription vk_framebuffer_attachment = {
 		.format = vk.surface_format.format,
@@ -380,66 +320,6 @@ Vulkan vk_setup(void) {
 	if (vkCreateRenderPass(vk.device, &vk_renderpass_info, NULL, &vk.renderpass) != VK_SUCCESS)
 		panic("Unable to create renderpass");
 
-	// Load shaders
-	size_t vert_shader_len;
-	uint8_t* vert_shader;
-	size_t frag_shader_len;
-	uint8_t* frag_shader;
-
-	if (!load_shader("shader/basic.vert.spv", &vert_shader, &vert_shader_len))
-		panic("Failed to load vertex shader");
-	if (!load_shader("shader/basic.frag.spv", &frag_shader, &frag_shader_len))
-		panic("Failed to load fragment shader");
-
-	VkShaderModuleCreateInfo vk_vert_shader_info = {
-		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-		.codeSize = vert_shader_len,
-		.pCode = (uint32_t*)vert_shader
-	};
-	if (vkCreateShaderModule(vk.device, &vk_vert_shader_info, NULL, &vk.vert_shader) != VK_SUCCESS)
-		panic("Unable to create vertex shader module");
-	VkShaderModuleCreateInfo vk_frag_shader_info = {
-		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-		.codeSize = frag_shader_len,
-		.pCode = (uint32_t*)frag_shader
-	};
-	if (vkCreateShaderModule(vk.device, &vk_frag_shader_info, NULL, &vk.frag_shader) != VK_SUCCESS)
-		panic("Unable to create fragment shader module");
-	
-	VkPipelineShaderStageCreateInfo vk_vert_stage_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-		.stage = VK_SHADER_STAGE_VERTEX_BIT,
-		.module = vk.vert_shader,
-		.pName = "main"
-	};
-	VkPipelineShaderStageCreateInfo vk_frag_stage_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-		.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-		.module = vk.frag_shader,
-		.pName = "main"
-	};
-	VkPipelineShaderStageCreateInfo vk_shader_stages[] = {vk_vert_stage_info, vk_frag_stage_info};
-
-	VkGraphicsPipelineCreateInfo vk_pipeline_info = {
-		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-		.stageCount = 2,
-		.pStages = vk_shader_stages,
-		.pVertexInputState = &vk_vertex_input_info,
-		.pInputAssemblyState = &vk_input_assembly_info,
-		.pViewportState = &vk_viewport_info,
-		.pRasterizationState = &vk_raster_info,
-		.pMultisampleState = &vk_multisample_info,
-		.pDepthStencilState = NULL,
-		.pColorBlendState = &vk_framebuffer_blend_info,
-		.pDynamicState = NULL,
-		.layout = vk.pipeline_layout,
-		.renderPass = vk.renderpass,
-		.subpass = 0,
-		.basePipelineHandle = VK_NULL_HANDLE,
-		.basePipelineIndex = -1,
-	};
-	if (vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &vk_pipeline_info, NULL, &vk.pipeline) != VK_SUCCESS)
-		panic("Unable to create graphics pipeline");
 
 	// Create framebuffers
 	vk.framebuffers = malloc(sizeof(VkFramebuffer) * vk.swapchain_image_len);
@@ -496,10 +376,6 @@ void vk_cleanup(Vulkan* vk) {
 
 	for (int index = 0; index < vk->swapchain_image_len; index++)
 		vkDestroyFramebuffer(vk->device, vk->framebuffers[index], NULL);
-	vkDestroyPipeline(vk->device, vk->pipeline, NULL);
-	vkDestroyPipelineLayout(vk->device, vk->pipeline_layout, NULL);
-	vkDestroyShaderModule(vk->device, vk->vert_shader, NULL);
-	vkDestroyShaderModule(vk->device, vk->frag_shader, NULL);
 	vkDestroyRenderPass(vk->device, vk->renderpass, NULL);
 	for (int index = 0; index < vk->swapchain_image_len; index++)
 		vkDestroyImageView(vk->device, vk->swapchain_images[index].view, NULL);
@@ -508,61 +384,4 @@ void vk_cleanup(Vulkan* vk) {
 	vkDestroySurfaceKHR(vk->instance, vk->surface, NULL);
 	vkDestroyDevice(vk->device, NULL);
 	vkDestroyInstance(vk->instance, NULL);
-}
-
-void vk_draw(Vulkan* vk) {
-	uint32_t image_index;
-	vkAcquireNextImageKHR(vk->device, vk->swapchain, UINT64_MAX, vk->render_semaphore, VK_NULL_HANDLE, &image_index);
-
-	VkCommandBufferBeginInfo vk_command_begin_info = {
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
-	};
-	if (vkBeginCommandBuffer(vk->command_buffers[image_index], &vk_command_begin_info) != VK_SUCCESS)
-		panic("Unable to start command buffer");
-
-	VkClearValue vk_clear_values[] = {
-		{ { { 0.0f, 0.0f, 0.0f, 1.0f } } }
-	};
-	VkRenderPassBeginInfo vk_renderpass_begin_info = {
-		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-		.renderPass = vk->renderpass,
-		.framebuffer = vk->framebuffers[image_index],
-		.renderArea = {
-			.offset = { 0, 0 },
-			.extent = vk->swapchain_extent
-		},
-		.clearValueCount = 1,
-		.pClearValues = vk_clear_values,
-	};
-	vkCmdBeginRenderPass(vk->command_buffers[image_index], &vk_renderpass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, vk->pipeline);
-	vkCmdDraw(vk->command_buffers[image_index], 3, 1, 0, 0);
-	vkCmdEndRenderPass(vk->command_buffers[image_index]);
-	if (vkEndCommandBuffer(vk->command_buffers[image_index]) != VK_SUCCESS)
-		panic("Unable to complete command buffer");
-
-	VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-	VkSubmitInfo vk_submit_info = {
-		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &vk->render_semaphore,
-		.pWaitDstStageMask = wait_stages,
-		.commandBufferCount = 1,
-		.pCommandBuffers = &vk->command_buffers[image_index],
-		.signalSemaphoreCount = 1,
-		.pSignalSemaphores = &vk->present_semaphore
-	};
-	if (vkQueueSubmit(vk->queue, 1, &vk_submit_info, VK_NULL_HANDLE) != VK_SUCCESS)
-		panic("Unable to submit render queue");
-
-	VkPresentInfoKHR vk_present_info = {
-		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &vk->present_semaphore,
-		.swapchainCount = 1,
-		.pSwapchains = &vk->swapchain,
-		.pImageIndices = &image_index
-	};
-	if (vkQueuePresentKHR(vk->queue, &vk_present_info) != VK_SUCCESS)
-		panic("Unable to present the swapchain");
 }

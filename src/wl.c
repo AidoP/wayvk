@@ -71,6 +71,9 @@ static void surface_frame(struct wl_client* client, struct wl_resource* resource
 	wl_callback_send_done(callback_resource, time.tv_nsec / 1000);
 	wl_resource_destroy(callback_resource);
 }
+static void surface_set_opaque_region(struct wl_client* client, struct wl_resource* resource, struct wl_resource* region) {
+	TODO
+}
 static void surface_commit(struct wl_client* client, struct wl_resource* resource) {
 	struct surface* surface_data = wl_resource_get_user_data(resource);
 	if (!surface_data)
@@ -78,11 +81,12 @@ static void surface_commit(struct wl_client* client, struct wl_resource* resourc
 	surface_data->current = surface_data->pending;
 }
 static void surface_set_buffer_scale(struct wl_client* client, struct wl_resource* resource, int32_t scale) {
-	//TODO
+	TODO
 }
 static const struct wl_surface_interface implement_surface = {
 	.destroy = surface_destroy,
 	.frame = surface_frame,
+	.set_opaque_region = surface_set_opaque_region,
 	.commit = surface_commit,
 	.set_buffer_scale = surface_set_buffer_scale
 };
@@ -122,7 +126,7 @@ static void register_output(struct wl_client* client, void* data, uint32_t versi
 	struct wl_resource* resource = wl_resource_create(client, &wl_output_interface, wl_output_interface.version, id);
 	wl_resource_set_implementation(resource, &implement_output, NULL, destroy_output);
 
-	//TODO
+	TODO
 	wl_output_send_geometry(resource, 0, 0, 300, 170, WL_OUTPUT_SUBPIXEL_UNKNOWN, "Unknown", "0x07B5", WL_OUTPUT_TRANSFORM_NORMAL);
 	wl_output_send_mode(resource, WL_OUTPUT_MODE_CURRENT, 1366, 768, 59994);
 	wl_output_send_scale(resource, 1);
