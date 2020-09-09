@@ -149,12 +149,11 @@ Vulkan vk_setup(void) {
 	uint32_t display_properties_len = 0;
 	vkGetPhysicalDeviceDisplayPlanePropertiesKHR(vk.physical_device, &display_properties_len, NULL);
 	if (display_properties_len == 0)
-		panic("No valid raw Vulkan display found");
+		panic("No display planes exist");
 	VkDisplayPlanePropertiesKHR* display_properties = malloc(sizeof(VkDisplayPlanePropertiesKHR) * display_properties_len);
 	vkGetPhysicalDeviceDisplayPlanePropertiesKHR(vk.physical_device, &display_properties_len, display_properties);
 	for (int index = 0; index < display_properties_len; index++) {
 		if (display_properties[index].currentDisplay == NULL || display_properties[index].currentDisplay == vk.display) {
-			vk.display = display_properties[index].currentDisplay;
 			vk.display_plane = index;
 			vk.display_stack = display_properties[index].currentStackIndex;
 			display_plane_found = true;
@@ -243,7 +242,7 @@ Vulkan vk_setup(void) {
 	VkSwapchainCreateInfoKHR vk_swapchain_info = {
 		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 		.surface = vk.surface,
-		.minImageCount = vk.surface_capabilities.minImageCount + vk.surface_capabilities.maxImageCount > vk.surface_capabilities.minImageCount ? 1 : 0,
+		.minImageCount = vk.surface_capabilities.minImageCount + 1 <= vk.surface_capabilities.maxImageCount ? vk.surface_capabilities.minImageCount + 1 : vk.surface_capabilities.minImageCount,
 		.imageFormat = vk.surface_format.format,
 		.imageColorSpace = vk.surface_format.colorSpace,
 		.imageExtent = vk.swapchain_extent,

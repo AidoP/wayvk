@@ -1,5 +1,7 @@
 #!/bin/sh
 
+mkdir -p target
+
 for shader in shader/*.frag shader/*.vert; do
 	glslc "$shader" -o "${shader}.spv"
 done
