@@ -8,6 +8,7 @@
 
 #include "vk.h"
 #include "wl.h"
+#include "font.h"
 #include "session.h"
 #include "term.h"
 
@@ -64,6 +65,11 @@ int main(void) {
 
 	Vulkan vk = vk_setup();
 	Wayland wl = wl_setup();
+	Font ft = ft_load(&vk);
+
+	ft_get_character(&ft, 'a');
+	ft_unload(ft, &vk);
+
 	struct udev* udev = udev_new();
 	struct libinput* li = libinput_udev_create_context(&input_callbacks, NULL, udev);
 	libinput_udev_assign_seat(li, "seat0");

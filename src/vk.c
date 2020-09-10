@@ -1,11 +1,10 @@
 #include "vk.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include "util.h"
-
-#define DEBUG
 
 const char* vk_instance_extensions[] = {
 	"VK_KHR_surface",
@@ -46,6 +45,13 @@ bool load_shader(const char* path, uint8_t** shader_data, size_t* shader_len) {
 
 	fclose(shader_file);
 	return true;
+}
+
+uint32_t vk_find_memory_type(Vulkan* vk, uint32_t memory_type, VkMemoryPropertyFlags memory_properties) {
+	for (uint32_t index = 0; index < vk->physical_device_memory_properties.memoryTypeCount; index++)
+		if (memory_type & (1 << index) && (vk->physical_device_memory_properties.memoryTypes[index].propertyFlags & memory_properties) == memory_properties)
+			return index;
+	panic("Unable to find suitable memory type");
 }
 
 Vulkan vk_setup(void) {
@@ -416,4 +422,88 @@ void vk_inflight_cleanup(Vulkan* vk, InFlight* inflight) {
 	vkDestroySemaphore(vk->device, inflight->render_semaphore, NULL);
 	vkDestroySemaphore(vk->device, inflight->present_semaphore, NULL);
 	vkDestroyFence(vk->device, inflight->fence, NULL);
+}
+
+struct vk_staging_buffer vk_staging_buffer_create(Vulkan* vk, void* data, size_t data_len) {
+	struct vk_staging_buffer staging;
+
+	VkBufferCreateInfo vk_buffer_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.size = staging.buffer_len = data_len,
+		.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+	};
+	if (vkCreateBuffer(vk->device, &vk_buffer_info, NULL, &staging.buffer) != VK_SUCCESS)
+		panic("Failed to create staging buffer");
+	vkGetBufferMemoryRequirements(vk->device, staging.buffer, &staging.memory_requirements);
+
+	VkMemoryAllocateInfo vk_memory_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.memoryTypeIndex = vk_find_memory_type(vk, staging.memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+		.allocationSize = staging.memory_requirements.size
+	};
+	if (vkAllocateMemory(vk->device, &vk_memory_info, NULL, &staging.memory) != VK_SUCCESS)
+		panic("Unable to allocate memory for staging buffer");
+	vkBindBufferMemory(vk->device, staging.buffer, staging.memory, 0);
+
+	void* staging_data;
+	vkMapMemory(vk->device, staging.memory, 0, data_len, 0, &staging_data);
+	memcpy(staging_data, data, data_len);
+	vkUnmapMemory(vk->device, staging.memory);
+
+	return staging;
+}
+
+void vk_staging_buffer_destroy(Vulkan* vk, struct vk_staging_buffer* staging) {
+	vkDestroyBuffer(vk->device, staging->buffer, NULL);
+	vkFreeMemory(vk->device, staging->memory, NULL);
+}
+
+void vk_staging_buffer_start_transfer(Vulkan* vk) {
+
+}
+
+void vk_staging_buffer_end_transfer(Vulkan* vk) {
+
+}
+
+struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging) {
+	struct vk_glyph glyph;
+	
+	VkImageCreateInfo vk_buffer_info = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.imageType = VK_IMAGE_TYPE_2D,
+		.extent = {
+				.width = 1,
+				.height = 1,
+				.depth = 1
+			},
+		.mipLevels = 1,
+		.arrayLayers = 1,
+		.format = VK_FORMAT_S8_UINT,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.tiling = VK_IMAGE_TILING_OPTIMAL,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+	};
+	if (vkCreateImage(vk->device, &vk_buffer_info, NULL, &glyph.image) != VK_SUCCESS)
+		panic("Failed to create glyph image");
+	vkGetImageMemoryRequirements(vk->device, glyph.image, &glyph.memory_requirements);
+
+	VkMemoryAllocateInfo vk_memory_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.memoryTypeIndex = vk_find_memory_type(vk, glyph.memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+		.allocationSize = glyph.memory_requirements.size
+	};
+	if (vkAllocateMemory(vk->device, &vk_memory_info, NULL, &glyph.memory) != VK_SUCCESS)
+		panic("Unable to allocate memory for staging buffer");
+	vkBindImageMemory(vk->device, glyph.image, glyph.memory, 0);
+
+	return glyph;
+}
+
+void vk_destroy_glyph(Vulkan* vk, struct vk_glyph* glyph) {
+	vkDestroyImage(vk->device, glyph->image, NULL);
+	vkFreeMemory(vk->device, glyph->memory, NULL);
 }

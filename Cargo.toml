@@ -1,0 +1,12 @@
+[package]
+name = "wayvk"
+version = "0.0.1"
+authors = ["AidoP"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+fontdue = "0.2"
+ash = "0.31"

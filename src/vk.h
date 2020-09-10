@@ -55,4 +55,30 @@ void vk_cleanup(Vulkan*);
 InFlight vk_inflight_setup(Vulkan*);
 void vk_inflight_cleanup(Vulkan*, InFlight*);
 
+uint32_t vk_find_memory_type(Vulkan* vk, uint32_t memory_types, VkMemoryPropertyFlags memory_properties);
+
 bool load_shader(const char* path, uint8_t** shader_data, size_t* shader_len);
+
+struct vk_staging_buffer {
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+	VkMemoryRequirements memory_requirements;
+	uint32_t buffer_len;
+};
+
+struct vk_glyph {
+	VkImage image;
+	VkDeviceMemory memory;
+	VkMemoryRequirements memory_requirements;
+};
+
+// Copies data to a buffer in GPU memory
+struct vk_staging_buffer vk_staging_buffer_create(Vulkan* vk, void* data, size_t data_len);
+void vk_staging_buffer_destroy(Vulkan* vk, struct vk_staging_buffer* staging);
+/// Initiates a transfer command buffer for a series of buffer transfers
+void vk_staging_buffer_start_transfer(Vulkan* vk);
+/// Submits buffer transfers to the queue and waits for completion
+void vk_staging_buffer_end_transfer(Vulkan* vk);
+
+struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging);
+void vk_destroy_glyph(Vulkan* vk, struct vk_glyph* glyph);

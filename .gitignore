@@ -1,2 +1,4 @@
 /target
 /shader/*.spv
+Cargo.lock
+default.ttf
