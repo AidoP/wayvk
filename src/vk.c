@@ -121,7 +121,9 @@ Vulkan vk_setup(void) {
 		.queueCount = 1,
 		.pQueuePriorities = &vk_queue_priorities
 	};
-	VkPhysicalDeviceFeatures vk_device_features = { VK_FALSE };
+	VkPhysicalDeviceFeatures vk_device_features = {
+		.samplerAnisotropy = VK_TRUE
+	};
 	vkGetPhysicalDeviceMemoryProperties(vk.physical_device, &vk.physical_device_memory_properties);
 
 	VkDeviceCreateInfo vk_device_info = {
@@ -459,28 +461,53 @@ void vk_staging_buffer_destroy(Vulkan* vk, struct vk_staging_buffer* staging) {
 	vkFreeMemory(vk->device, staging->memory, NULL);
 }
 
-void vk_staging_buffer_start_transfer(Vulkan* vk) {
-
+VkCommandBuffer vk_staging_buffer_start_transfer(Vulkan* vk) {
+	VkCommandBuffer transfer_buffer;
+	VkCommandBufferAllocateInfo vk_command_buffer_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandPool = vk->command_pool,
+		.commandBufferCount = 1
+	};
+	if (vkAllocateCommandBuffers(vk->device, &vk_command_buffer_info, &transfer_buffer) != VK_SUCCESS)
+		panic("Unable to allocate staging transfer command buffer");
+	
+	VkCommandBufferBeginInfo vk_transfer_begin_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+	};
+	if (vkBeginCommandBuffer(transfer_buffer, &vk_transfer_begin_info) != VK_SUCCESS)
+		panic("Unable to begin transfer command buffer");
+	return transfer_buffer;
 }
 
-void vk_staging_buffer_end_transfer(Vulkan* vk) {
-
+void vk_staging_buffer_end_transfer(Vulkan* vk, VkCommandBuffer transfer_buffer) {
+	vkEndCommandBuffer(transfer_buffer);
+	VkSubmitInfo vk_sumbit_info = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &transfer_buffer,
+	};
+	if (vkQueueSubmit(vk->queue, 1, &vk_sumbit_info, VK_NULL_HANDLE) != VK_SUCCESS)
+		panic("Unable to submit staging buffer transfer commands");
+	vkQueueWaitIdle(vk->queue);
+	vkFreeCommandBuffers(vk->device, vk->command_pool, 1, &transfer_buffer);
 }
 
-struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging) {
+struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging, VkCommandBuffer transfer_buffer, uint32_t width, uint32_t height) {
 	struct vk_glyph glyph;
 	
 	VkImageCreateInfo vk_buffer_info = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 		.imageType = VK_IMAGE_TYPE_2D,
 		.extent = {
-				.width = 1,
-				.height = 1,
+				.width = width,
+				.height = height,
 				.depth = 1
 			},
 		.mipLevels = 1,
 		.arrayLayers = 1,
-		.format = VK_FORMAT_S8_UINT,
+		.format = VK_FORMAT_R8_SRGB,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
 		.tiling = VK_IMAGE_TILING_OPTIMAL,
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -500,10 +527,120 @@ struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging) {
 		panic("Unable to allocate memory for staging buffer");
 	vkBindImageMemory(vk->device, glyph.image, glyph.memory, 0);
 
+	VkImageMemoryBarrier transfer_barrier = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.image = glyph.image,
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		},
+		.srcAccessMask = 0,
+		.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+	};
+	vkCmdPipelineBarrier(transfer_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &transfer_barrier);
+
+	VkBufferImageCopy vk_copy_info = {
+		.bufferOffset = 0,
+		.bufferRowLength = 0,
+		.bufferImageHeight = 0,
+		.imageSubresource = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.mipLevel = 0,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		},
+		.imageOffset = { 0, 0, 0 },
+		.imageExtent = { width, height, 1 }
+	};
+	vkCmdCopyBufferToImage(transfer_buffer, staging->buffer, glyph.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &vk_copy_info);
+	
+	VkImageMemoryBarrier render_barrier = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.image = glyph.image,
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		},
+		.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+	};
+	vkCmdPipelineBarrier(transfer_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &render_barrier);
+
+	VkImageViewCreateInfo vk_view_info = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.image = glyph.image,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = VK_FORMAT_R8_SRGB,
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseArrayLayer = 0,
+			.layerCount = 1,
+			.baseMipLevel = 0,
+			.levelCount = 1
+		}
+	};
+	if (vkCreateImageView(vk->device, &vk_view_info, NULL, &glyph.view) != VK_SUCCESS)
+		panic("Unable to create glyph image view");
+	
+	VkSamplerCreateInfo vk_sampler_info = {
+		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+		.magFilter = VK_FILTER_LINEAR,
+		.minFilter = VK_FILTER_LINEAR,
+		.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+		.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+		.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+		.anisotropyEnable = VK_TRUE,
+		.maxAnisotropy = 16.0f,
+		.borderColor = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK,
+		.unnormalizedCoordinates = VK_FALSE,
+		.compareEnable = VK_FALSE,
+		.compareOp = VK_COMPARE_OP_ALWAYS,
+		.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+		.mipLodBias = 0.0f,
+		.minLod = 0.0f,
+		.maxLod = 0.0f,
+	};
+	if (vkCreateSampler(vk->device, &vk_sampler_info, NULL, &glyph.sampler) != VK_SUCCESS)
+		panic("Unable to create glyph sampler");
+	
 	return glyph;
 }
 
 void vk_destroy_glyph(Vulkan* vk, struct vk_glyph* glyph) {
+	vkDestroySampler(vk->device, glyph->sampler, NULL);
+	vkDestroyImageView(vk->device, glyph->view, NULL);
 	vkDestroyImage(vk->device, glyph->image, NULL);
 	vkFreeMemory(vk->device, glyph->memory, NULL);
+}
+
+void vk_bind_glyph(Vulkan* vk, struct vk_glyph* glyph, VkDescriptorSet descriptor_set, uint32_t binding) {
+	VkDescriptorImageInfo vk_glyph_image_info = {
+		.imageView = glyph->view,
+		.sampler = glyph->sampler,
+		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	};
+	VkWriteDescriptorSet vk_glyph_write = {
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.dstSet = descriptor_set,
+		.dstBinding = binding,
+		.dstArrayElement = 0,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = 1,
+		.pImageInfo = &vk_glyph_image_info
+	};
+	vkUpdateDescriptorSets(vk->device, 1, &vk_glyph_write, 0, NULL);
 }

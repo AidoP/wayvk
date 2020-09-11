@@ -1,5 +1,6 @@
 #include "term.h"
 #include "util.h"
+#include "font.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,14 +9,60 @@ struct term_data {
 	float colr;
 	float colg;
 	float colb;
+
+	VkDescriptorSet* glyph_descriptor_sets;
+	VkDescriptorSetLayout glyph_descriptor_set_layout;
+	VkDescriptorPool glyph_descriptor_pool;
 };
 
 static struct session term_setup(void** data, Vulkan* vk) {
 	*data = malloc(sizeof(struct term_data));
-	((struct term_data*)*data)->colr = (float)(rand() % 1000) / 1000.0;
-	((struct term_data*)*data)->colg = (float)(rand() % 1000) / 1000.0;
-	((struct term_data*)*data)->colb = (float)(rand() % 1000) / 1000.0;
+	struct term_data* term = *data;
+	term->colr = (float)(rand() % 1000) / 1000.0;
+	term->colg = (float)(rand() % 1000) / 1000.0;
+	term->colb = (float)(rand() % 1000) / 1000.0;
     struct session session;
+
+	// Create descriptors
+	VkDescriptorSetLayoutBinding vk_glyph_sampler_binding = {
+		.binding = 0,
+		.descriptorCount = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.pImmutableSamplers = NULL,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+	};
+	VkDescriptorSetLayoutCreateInfo vk_glyph_descriptor_set_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 1,
+		.pBindings = &vk_glyph_sampler_binding,
+	};
+	if (vkCreateDescriptorSetLayout(vk->device, &vk_glyph_descriptor_set_info, NULL, &term->glyph_descriptor_set_layout) != VK_SUCCESS)
+		panic("Unable to create glyph descriptor set layout");
+
+	VkDescriptorPoolSize vk_glyph_sampler_pool_size = {
+		.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = vk->swapchain_image_len
+	};
+	VkDescriptorPoolCreateInfo vk_glyph_descriptor_pool_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.poolSizeCount = 1,
+		.pPoolSizes = &vk_glyph_sampler_pool_size,
+		.maxSets = vk->swapchain_image_len
+	};
+	if (vkCreateDescriptorPool(vk->device, &vk_glyph_descriptor_pool_info, NULL, &term->glyph_descriptor_pool) != VK_SUCCESS)
+		panic("Unable to create descriptor pool");
+	VkDescriptorSetLayout* vk_glyph_pool_layouts = malloc(sizeof(VkDescriptorSetLayout) * vk->swapchain_image_len);
+	for (size_t index = 0; index < vk->swapchain_image_len; index++)
+		vk_glyph_pool_layouts[index] = term->glyph_descriptor_set_layout;
+	VkDescriptorSetAllocateInfo vk_glyph_descriptor_sets_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+		.descriptorPool = term->glyph_descriptor_pool,
+		.descriptorSetCount = vk->swapchain_image_len,
+		.pSetLayouts = vk_glyph_pool_layouts
+	};
+	term->glyph_descriptor_sets = malloc(sizeof(VkDescriptorSet) * vk->swapchain_image_len);
+	if (vkAllocateDescriptorSets(vk->device, &vk_glyph_descriptor_sets_info, term->glyph_descriptor_sets) != VK_SUCCESS)
+		panic("Unable to allocate glyph descriptor sets");
 	
 	// Create the graphics pipeline
 	VkPipelineVertexInputStateCreateInfo vk_vertex_input_info = {
@@ -74,6 +121,8 @@ static struct session term_setup(void** data, Vulkan* vk) {
 	};
 	VkPipelineLayoutCreateInfo vk_layout_info = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+		.setLayoutCount = 1,
+		.pSetLayouts = &term->glyph_descriptor_set_layout,
 	};
 	if (vkCreatePipelineLayout(vk->device, &vk_layout_info, NULL, &session.pipeline_layout) != VK_SUCCESS)
 		panic("Unable to create pipeline layout");
@@ -143,10 +192,14 @@ static struct session term_setup(void** data, Vulkan* vk) {
 }
 
 static void term_cleanup(void* data, struct session* session, Vulkan* vk) {
+	struct term_data* term = data;
 	vkQueueWaitIdle(vk->queue);
 	vkDeviceWaitIdle(vk->device);
 	vkDestroyPipeline(vk->device, session->pipeline, NULL);
 	vkDestroyPipelineLayout(vk->device, session->pipeline_layout, NULL);
+	free(term->glyph_descriptor_sets);
+	vkDestroyDescriptorPool(vk->device, term->glyph_descriptor_pool, NULL);
+	vkDestroyDescriptorSetLayout(vk->device, term->glyph_descriptor_set_layout, NULL);
 	vkDestroyShaderModule(vk->device, session->vert_shader, NULL);
 	vkDestroyShaderModule(vk->device, session->frag_shader, NULL);
 }
@@ -159,7 +212,8 @@ static void term_hidden(void* data, struct session* session, Vulkan* vk) {
 
 }
 
-static void term_update(void* data, struct session* session, Vulkan* vk) {
+static void term_update(void* data, struct session* session, Vulkan* vk, Font* ft) {
+	struct term_data* term = data;
 	vk->current_inflight = (vk->current_inflight + 1) % VK_MAX_INFLIGHT;
 	InFlight* inflight = &vk->inflight[vk->current_inflight];
 
@@ -173,7 +227,6 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 			break;
 		case VK_TIMEOUT:
 		case VK_NOT_READY:
-			panic("Not Ready");
 			return;
 		case VK_SUBOPTIMAL_KHR:
 			TODO
@@ -203,7 +256,12 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 	};
 	vkCmdBeginRenderPass(vk->command_buffers[image_index], &vk_renderpass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, session->pipeline);
-	vkCmdDraw(vk->command_buffers[image_index], 3, 1, 0, 0);
+
+	// Bind texture
+	vk_bind_glyph(vk, ft_get_character(ft, '$'), term->glyph_descriptor_sets[image_index], 0);
+	vkCmdBindDescriptorSets(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, session->pipeline_layout, 0, 1, &term->glyph_descriptor_sets[image_index], 0, NULL);
+
+	vkCmdDraw(vk->command_buffers[image_index], 6, 1, 0, 0);
 	vkCmdEndRenderPass(vk->command_buffers[image_index]);
 	if (vkEndCommandBuffer(vk->command_buffers[image_index]) != VK_SUCCESS)
 		panic("Unable to complete command buffer");

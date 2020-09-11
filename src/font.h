@@ -12,5 +12,5 @@ typedef struct ft {
 Font ft_load(Vulkan*);
 void ft_unload(Font, Vulkan*);
 
-void ft_get_character(Font*, char);
-void ft_layout();
+struct vk_glyph* ft_get_character(Font*, char);
+//void ft_layout();

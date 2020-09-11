@@ -68,17 +68,20 @@ struct vk_staging_buffer {
 
 struct vk_glyph {
 	VkImage image;
+	VkImageView view;
+	VkSampler sampler;
 	VkDeviceMemory memory;
 	VkMemoryRequirements memory_requirements;
 };
 
 // Copies data to a buffer in GPU memory
-struct vk_staging_buffer vk_staging_buffer_create(Vulkan* vk, void* data, size_t data_len);
-void vk_staging_buffer_destroy(Vulkan* vk, struct vk_staging_buffer* staging);
+struct vk_staging_buffer vk_staging_buffer_create(Vulkan*, void* data, size_t data_len);
+void vk_staging_buffer_destroy(Vulkan*, struct vk_staging_buffer*);
 /// Initiates a transfer command buffer for a series of buffer transfers
-void vk_staging_buffer_start_transfer(Vulkan* vk);
+VkCommandBuffer vk_staging_buffer_start_transfer(Vulkan*);
 /// Submits buffer transfers to the queue and waits for completion
-void vk_staging_buffer_end_transfer(Vulkan* vk);
+void vk_staging_buffer_end_transfer(Vulkan*, VkCommandBuffer);
 
-struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging);
-void vk_destroy_glyph(Vulkan* vk, struct vk_glyph* glyph);
+struct vk_glyph vk_create_glyph(Vulkan*, struct vk_staging_buffer*, VkCommandBuffer, uint32_t width, uint32_t height);
+void vk_destroy_glyph(Vulkan*, struct vk_glyph*);
+void vk_bind_glyph(Vulkan* vk, struct vk_glyph* glyph, VkDescriptorSet descriptor_set, uint32_t binding);
