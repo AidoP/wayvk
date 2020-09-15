@@ -1,4 +1,5 @@
 #pragma once
+#include "font.h"
 
 #include <vulkan/vulkan.h>
 #include <stdbool.h>
@@ -9,6 +10,17 @@ typedef struct {
 	VkImageView view;
 } Image;
 
+struct vk_glyph_pipeline {
+	VkPipelineLayout layout;
+	VkPipeline pipeline;
+
+	VkShaderModule vert_shader;
+	VkShaderModule frag_shader;
+
+	VkDescriptorSetLayout descriptor_layout;
+	VkDescriptorPool descriptor_pool;
+};
+
 #define VK_MAX_INFLIGHT 2
 
 typedef struct vk_inflight {
@@ -18,6 +30,8 @@ typedef struct vk_inflight {
 } InFlight;
 
 typedef struct vk {
+	Font ft;
+
 	VkInstance instance;
 	VkPhysicalDevice physical_device;
 	VkPhysicalDeviceMemoryProperties physical_device_memory_properties;
@@ -47,6 +61,8 @@ typedef struct vk {
 	VkSurfaceFormatKHR surface_format;
 	VkPresentModeKHR present_mode;
 	VkExtent2D swapchain_extent;
+
+	struct vk_glyph_pipeline glyph_pipeline;
 } Vulkan;
 
 Vulkan vk_setup(void);
@@ -72,6 +88,7 @@ struct vk_glyph {
 	VkSampler sampler;
 	VkDeviceMemory memory;
 	VkMemoryRequirements memory_requirements;
+	VkDescriptorSet descriptor;
 };
 
 // Copies data to a buffer in GPU memory
@@ -82,6 +99,13 @@ VkCommandBuffer vk_staging_buffer_start_transfer(Vulkan*);
 /// Submits buffer transfers to the queue and waits for completion
 void vk_staging_buffer_end_transfer(Vulkan*, VkCommandBuffer);
 
+struct vk_glyph_push_constant {
+	float x;
+	float y;
+	float width;
+	float height;
+};
+
 struct vk_glyph vk_create_glyph(Vulkan*, struct vk_staging_buffer*, VkCommandBuffer, uint32_t width, uint32_t height);
 void vk_destroy_glyph(Vulkan*, struct vk_glyph*);
-void vk_bind_glyph(Vulkan* vk, struct vk_glyph* glyph, VkDescriptorSet descriptor_set, uint32_t binding);
+void vk_draw_glyph(Vulkan*, struct vk_glyph*, struct vk_glyph_push_constant, uint32_t image_index);

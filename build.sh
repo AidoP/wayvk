@@ -1,7 +1,13 @@
 #!/bin/sh
 set -e
 
-if [ "$1" = "release" ]; then
+for shader in shader/*.frag shader/*.vert; do
+	glslc "$shader" -o "${shader}.spv"
+done
+
+if [ "$1" = "shader" ]; then
+	exit
+elif [ "$1" = "release" ]; then
 	debug="RELEASE"
 	rustpath="target/release"
 	rustflags="--release"
@@ -11,10 +17,6 @@ else
 fi
 
 cargo build $rustflags
-
-for shader in shader/*.frag shader/*.vert; do
-	glslc "$shader" -o "${shader}.spv"
-done
 
 proto_wl='/usr/share/wayland/wayland.xml'
 proto_xdg_shell='/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml'

@@ -5,6 +5,6 @@ layout(location = 0) in vec2 tex_coord;
 layout(binding = 0) uniform sampler2D glyph_sampler;
 
 void main() {
-	float font = texture(glyph_sampler, tex_coord).r;
-	colour = vec4(font, font, font, 1.0);
+	vec3 text_colour = vec3(1.0);
+	colour = vec4(text_colour, texture(glyph_sampler, tex_coord).r);
 }

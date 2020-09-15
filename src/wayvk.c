@@ -8,7 +8,6 @@
 
 #include "vk.h"
 #include "wl.h"
-#include "font.h"
 #include "session.h"
 #include "term.h"
 
@@ -65,7 +64,6 @@ int main(void) {
 
 	Vulkan vk = vk_setup();
 	Wayland wl = wl_setup();
-	Font ft = ft_load(&vk);
 
 	struct udev* udev = udev_new();
 	struct libinput* li = libinput_udev_create_context(&input_callbacks, NULL, udev);
@@ -176,7 +174,7 @@ int main(void) {
 		wl_display_flush_clients(wl.display);
 
 		// Update the active session
-		session_update(&vk, &ft, &sessions[active_session]);
+		session_update(&vk, &sessions[active_session]);
 	}
 
 
@@ -184,7 +182,7 @@ int main(void) {
 	for (size_t index = 0; index < sessions_len; index++)
 		session_cleanup(&vk, &sessions[index]);
 	wl_cleanup(&wl);
-	ft_unload(ft, &vk);
+	vkDeviceWaitIdle(vk.device);
 	vk_cleanup(&vk);
 
 	libinput_unref(li);

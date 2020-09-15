@@ -61,6 +61,8 @@ Vulkan vk_setup(void) {
 	vk.present_mode = VK_PRESENT_MODE_FIFO_KHR;
 	vk.current_inflight = 0;
 
+	vk.ft = ft_load();
+
 	VkApplicationInfo vk_appinfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
 		.pApplicationName = "Wayvk",
@@ -374,6 +376,178 @@ Vulkan vk_setup(void) {
 	for (uint_fast8_t index = 0; index < VK_MAX_INFLIGHT; index++)
 		vk.inflight[index] = vk_inflight_setup(&vk);
 
+	
+	// Create descriptors
+	VkDescriptorSetLayoutBinding vk_glyph_sampler_binding = {
+		.binding = 0,
+		.descriptorCount = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.pImmutableSamplers = NULL,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+	};
+	VkDescriptorSetLayoutCreateInfo vk_glyph_descriptor_layout_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.bindingCount = 1,
+		.pBindings = &vk_glyph_sampler_binding,
+	};
+	if (vkCreateDescriptorSetLayout(vk.device, &vk_glyph_descriptor_layout_info, NULL, &vk.glyph_pipeline.descriptor_layout) != VK_SUCCESS)
+		panic("Unable to create glyph descriptor set layout");
+
+	VkDescriptorPoolSize vk_glyph_sampler_pool_size = {
+		.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = 255 // TODO: real count
+	};
+	VkDescriptorPoolCreateInfo vk_glyph_descriptor_pool_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.poolSizeCount = 1,
+		.pPoolSizes = &vk_glyph_sampler_pool_size,
+		.maxSets = 255 // TODO: real count
+	};
+	if (vkCreateDescriptorPool(vk.device, &vk_glyph_descriptor_pool_info, NULL, &vk.glyph_pipeline.descriptor_pool) != VK_SUCCESS)
+		panic("Unable to create descriptor pool");
+	//VkDescriptorSetLayout* vk_glyph_pool_layouts = malloc(sizeof(VkDescriptorSetLayout) * vk.swapchain_image_len);
+	//for (size_t index = 0; index < vk.swapchain_image_len; index++)
+	//	vk_glyph_pool_layouts[index] = vk.glyph_pipeline.descriptor_layout;
+	
+	// Create the graphics pipeline
+	VkPipelineVertexInputStateCreateInfo vk_vertex_input_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.vertexBindingDescriptionCount = 0,
+		.vertexAttributeDescriptionCount = 0,
+	};
+	VkPipelineInputAssemblyStateCreateInfo vk_input_assembly_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		.primitiveRestartEnable = VK_FALSE,
+	};
+	VkViewport vk_viewport = {
+		.x = 0.0f,
+		.y = 0.0f,
+		.width = (float) vk.swapchain_extent.width,
+		.height = (float) vk.swapchain_extent.height,
+		.minDepth = 0.0f,
+		.maxDepth = 1.0f
+	};
+	VkRect2D vk_scissor = {
+		.offset = { 0 },
+		.extent = vk.swapchain_extent
+	};
+	VkPipelineViewportStateCreateInfo vk_viewport_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = 1,
+		.pViewports = &vk_viewport,
+		.scissorCount = 1,
+		.pScissors = &vk_scissor
+	};
+	VkPipelineRasterizationStateCreateInfo vk_raster_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		.depthClampEnable = VK_FALSE,
+		.rasterizerDiscardEnable = VK_FALSE,
+		.polygonMode = VK_POLYGON_MODE_FILL,
+		.lineWidth = 1.0f,
+		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.frontFace = VK_FRONT_FACE_CLOCKWISE,
+		.depthBiasEnable = VK_FALSE,
+	};
+	VkPipelineMultisampleStateCreateInfo vk_multisample_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		.sampleShadingEnable = VK_FALSE,
+		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
+	};
+	VkPipelineColorBlendAttachmentState vk_framebuffer_blend_state = {
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+		.blendEnable = VK_TRUE,
+		.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+		.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		.colorBlendOp = VK_BLEND_OP_ADD,
+		.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+		.alphaBlendOp = VK_BLEND_OP_ADD
+	};
+	VkPipelineColorBlendStateCreateInfo vk_framebuffer_blend_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.logicOpEnable = VK_FALSE,
+		.attachmentCount = 1,
+		.pAttachments = &vk_framebuffer_blend_state
+	};
+	VkPushConstantRange vk_push_constant = {
+		.offset = 0,
+		.size = sizeof(struct vk_glyph_push_constant),
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+	};
+	VkPipelineLayoutCreateInfo vk_layout_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+		.setLayoutCount = 1,
+		.pSetLayouts = &vk.glyph_pipeline.descriptor_layout,
+		.pushConstantRangeCount = 1,
+		.pPushConstantRanges = &vk_push_constant
+	};
+	if (vkCreatePipelineLayout(vk.device, &vk_layout_info, NULL, &vk.glyph_pipeline.layout) != VK_SUCCESS)
+		panic("Unable to create pipeline layout");
+
+	// Load shaders
+	size_t vert_shader_len;
+	uint8_t* vert_shader;
+	size_t frag_shader_len;
+	uint8_t* frag_shader;
+
+	if (!load_shader("shader/basic.vert.spv", &vert_shader, &vert_shader_len))
+		panic("Failed to load vertex shader");
+	if (!load_shader("shader/basic.frag.spv", &frag_shader, &frag_shader_len))
+		panic("Failed to load fragment shader");
+
+	VkShaderModuleCreateInfo vk_vert_shader_info = {
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = vert_shader_len,
+		.pCode = (uint32_t*)vert_shader
+	};
+	if (vkCreateShaderModule(vk.device, &vk_vert_shader_info, NULL, &vk.glyph_pipeline.vert_shader) != VK_SUCCESS)
+		panic("Unable to create vertex shader module");
+	VkShaderModuleCreateInfo vk_frag_shader_info = {
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = frag_shader_len,
+		.pCode = (uint32_t*)frag_shader
+	};
+	if (vkCreateShaderModule(vk.device, &vk_frag_shader_info, NULL, &vk.glyph_pipeline.frag_shader) != VK_SUCCESS)
+		panic("Unable to create fragment shader module");
+	
+	VkPipelineShaderStageCreateInfo vk_vert_stage_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		.stage = VK_SHADER_STAGE_VERTEX_BIT,
+		.module = vk.glyph_pipeline.vert_shader,
+		.pName = "main"
+	};
+	VkPipelineShaderStageCreateInfo vk_frag_stage_info = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+		.module = vk.glyph_pipeline.frag_shader,
+		.pName = "main"
+	};
+	VkPipelineShaderStageCreateInfo vk_shader_stages[] = {vk_vert_stage_info, vk_frag_stage_info};
+
+	VkGraphicsPipelineCreateInfo vk_pipeline_info = {
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.stageCount = 2,
+		.pStages = vk_shader_stages,
+		.pVertexInputState = &vk_vertex_input_info,
+		.pInputAssemblyState = &vk_input_assembly_info,
+		.pViewportState = &vk_viewport_info,
+		.pRasterizationState = &vk_raster_info,
+		.pMultisampleState = &vk_multisample_info,
+		.pDepthStencilState = NULL,
+		.pColorBlendState = &vk_framebuffer_blend_info,
+		.pDynamicState = NULL,
+		.layout = vk.glyph_pipeline.layout,
+		.renderPass = vk.renderpass,
+		.subpass = 0,
+		.basePipelineHandle = VK_NULL_HANDLE,
+		.basePipelineIndex = -1,
+	};
+	if (vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &vk_pipeline_info, NULL, &vk.glyph_pipeline.pipeline) != VK_SUCCESS)
+		panic("Unable to create graphics pipeline");
+
+	ft_raster(&vk.ft, &vk);
+
 	return vk;
 }
 
@@ -384,6 +558,14 @@ void vk_cleanup(Vulkan* vk) {
 	vkFreeCommandBuffers(vk->device, vk->command_pool, vk->swapchain_image_len, vk->command_buffers);
 	free(vk->command_buffers);
 	vkDestroyCommandPool(vk->device, vk->command_pool, NULL);
+
+	ft_unload(vk->ft, vk);
+	vkDestroyDescriptorPool(vk->device, vk->glyph_pipeline.descriptor_pool, NULL);
+	vkDestroyDescriptorSetLayout(vk->device, vk->glyph_pipeline.descriptor_layout, NULL);
+	vkDestroyPipeline(vk->device, vk->glyph_pipeline.pipeline, NULL);
+	vkDestroyPipelineLayout(vk->device, vk->glyph_pipeline.layout, NULL);
+	vkDestroyShaderModule(vk->device, vk->glyph_pipeline.vert_shader, NULL);
+	vkDestroyShaderModule(vk->device, vk->glyph_pipeline.frag_shader, NULL);
 
 	for (int index = 0; index < vk->swapchain_image_len; index++)
 		vkDestroyFramebuffer(vk->device, vk->framebuffers[index], NULL);
@@ -496,6 +678,15 @@ void vk_staging_buffer_end_transfer(Vulkan* vk, VkCommandBuffer transfer_buffer)
 
 struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging, VkCommandBuffer transfer_buffer, uint32_t width, uint32_t height) {
 	struct vk_glyph glyph;
+
+	VkDescriptorSetAllocateInfo vk_glyph_descriptor_sets_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+		.descriptorPool = vk->glyph_pipeline.descriptor_pool,
+		.descriptorSetCount = 1,
+		.pSetLayouts = &vk->glyph_pipeline.descriptor_layout
+	};
+	if (vkAllocateDescriptorSets(vk->device, &vk_glyph_descriptor_sets_info, &glyph.descriptor) != VK_SUCCESS)
+		panic("Unable to allocate glyph descriptor sets");
 	
 	VkImageCreateInfo vk_buffer_info = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -616,31 +807,38 @@ struct vk_glyph vk_create_glyph(Vulkan* vk, struct vk_staging_buffer* staging, V
 	};
 	if (vkCreateSampler(vk->device, &vk_sampler_info, NULL, &glyph.sampler) != VK_SUCCESS)
 		panic("Unable to create glyph sampler");
-	
-	return glyph;
-}
 
-void vk_destroy_glyph(Vulkan* vk, struct vk_glyph* glyph) {
-	vkDestroySampler(vk->device, glyph->sampler, NULL);
-	vkDestroyImageView(vk->device, glyph->view, NULL);
-	vkDestroyImage(vk->device, glyph->image, NULL);
-	vkFreeMemory(vk->device, glyph->memory, NULL);
-}
-
-void vk_bind_glyph(Vulkan* vk, struct vk_glyph* glyph, VkDescriptorSet descriptor_set, uint32_t binding) {
 	VkDescriptorImageInfo vk_glyph_image_info = {
-		.imageView = glyph->view,
-		.sampler = glyph->sampler,
+		.imageView = glyph.view,
+		.sampler = glyph.sampler,
 		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 	};
 	VkWriteDescriptorSet vk_glyph_write = {
 		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-		.dstSet = descriptor_set,
-		.dstBinding = binding,
+		.dstSet = glyph.descriptor,
+		.dstBinding = 0,
 		.dstArrayElement = 0,
 		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 		.descriptorCount = 1,
 		.pImageInfo = &vk_glyph_image_info
 	};
 	vkUpdateDescriptorSets(vk->device, 1, &vk_glyph_write, 0, NULL);
+	
+	return glyph;
+}
+
+void vk_destroy_glyph(Vulkan* vk, struct vk_glyph* glyph) {
+	//vkFreeDescriptorSets(vk->device, vk->glyph_pipeline.descriptor_pool, 1, &glyph->descriptor);
+	vkDestroySampler(vk->device, glyph->sampler, NULL);
+	vkDestroyImageView(vk->device, glyph->view, NULL);
+	vkDestroyImage(vk->device, glyph->image, NULL);
+	vkFreeMemory(vk->device, glyph->memory, NULL);
+}
+
+void vk_draw_glyph(Vulkan* vk, struct vk_glyph* glyph, struct vk_glyph_push_constant glyph_push_constant, uint32_t image_index) {
+	vkCmdBindDescriptorSets(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, vk->glyph_pipeline.layout, 0, 1, &glyph->descriptor, 0, NULL);
+
+	vkCmdPushConstants(vk->command_buffers[image_index], vk->glyph_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(struct vk_glyph_push_constant), &glyph_push_constant);
+
+	vkCmdDraw(vk->command_buffers[image_index], 6, 1, 0, 0);
 }
