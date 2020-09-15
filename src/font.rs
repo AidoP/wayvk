@@ -1,6 +1,7 @@
 use ash::vk;
 use fontdue::{Font, FontSettings, layout::{GlyphRasterConfig, Layout, LayoutSettings, TextStyle, WrapStyle}};
 
+use std::{fs::File,io::Read};
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 
@@ -75,14 +76,17 @@ const FONT_CHARS: &[char] = &[
     '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
     '[', ']', '{', '}', '\\', '|', ';', ':', '\'', '"', ',', '<', '.', '>', '/', '?'
 ];
-const FONT_SIZE: f32 = 12.0;
 
 #[no_mangle]
-extern "C" fn ft_load() -> Ft {
+extern "C" fn ft_load(path: *const i8, size: f32) -> Ft {
     let mut settings = FontSettings::default();
-    settings.scale = FONT_SIZE;
+    settings.scale = size;
 
-    let raw_font = include_bytes!("/usr/share/fonts/noto/NotoSans-Regular.ttf") as &[u8];
+    let mut file = File::open(unsafe { std::ffi::CStr::from_ptr(path).to_str().unwrap() }).expect("Unable to open font file");
+
+    let mut raw_font = Vec::new();
+    file.read_to_end(&mut raw_font).unwrap();
+
     let font = Box::new(Font::from_bytes(raw_font, settings).unwrap());
 
     Ft {
@@ -93,17 +97,16 @@ extern "C" fn ft_load() -> Ft {
 
 #[no_mangle]
 extern "C" fn ft_unload(mut ft: Ft, vk: *mut Vulkan) {
-    // font gets dropped here with RAII
     for (_, glyph) in ft.glyphs.iter_mut() {
         unsafe { vk_destroy_glyph(vk, glyph) }
     }
 }
 
 #[no_mangle]
-extern "C" fn ft_raster(ft: &mut Ft, vk: *mut Vulkan) {
+extern "C" fn ft_raster(ft: &mut Ft, vk: *mut Vulkan, size: f32) {
     let mut staging_buffers = Vec::new();
     for &character in FONT_CHARS {
-        let (metrics, bitmap) = ft.font.rasterize(character, FONT_SIZE);
+        let (metrics, bitmap) = ft.font.rasterize(character, size);
         staging_buffers.push((character, metrics, unsafe { vk_staging_buffer_create(vk, bitmap.as_ptr(), bitmap.len()) }));
     }
     let transfer_buffer = unsafe { vk_staging_buffer_start_transfer(vk) };
@@ -112,7 +115,7 @@ extern "C" fn ft_raster(ft: &mut Ft, vk: *mut Vulkan) {
             ft.glyphs.insert(
                 GlyphRasterConfig {
                     c: *character,
-                    px: FONT_SIZE,
+                    px: size,
                     font_index: 0
                 },
                 vk_create_glyph(vk, buffer, transfer_buffer, metrics.width as _, metrics.height as _)
@@ -129,22 +132,7 @@ extern "C" fn ft_raster(ft: &mut Ft, vk: *mut Vulkan) {
 }
 
 #[no_mangle]
-extern "C" fn ft_get_character<'a>(font: &mut Ft, character: u8) -> *mut Glyph {
-    let character = character as _;
-    let glyph = GlyphRasterConfig {
-        c: character,
-        px: FONT_SIZE,
-        font_index: 0
-    };
-    if let Some(glyph_data) = font.glyphs.get_mut(&glyph) {
-        glyph_data
-    } else {
-        std::ptr::null_mut()
-    }
-}
-
-#[no_mangle]
-extern "C" fn ft_draw_string(vk: &mut Vulkan, string: *const u8, string_len: usize, image_index: u32) {
+extern "C" fn ft_draw_string(vk: &mut Vulkan, string: *const u8, string_len: usize, size: f32, image_index: u32) {
     let mut layout = Layout::new();
     let settings = LayoutSettings {
         include_whitespace: false,
@@ -156,7 +144,7 @@ extern "C" fn ft_draw_string(vk: &mut Vulkan, string: *const u8, string_len: usi
     let mut output = Vec::new();
     let fonts = &[vk.font.as_ref()];
     let text = &[
-        &TextStyle::new(std::str::from_utf8(unsafe { std::slice::from_raw_parts(string, string_len) }).unwrap(), FONT_SIZE, 0)
+        &TextStyle::new(std::str::from_utf8(unsafe { std::slice::from_raw_parts(string, string_len) }).unwrap(), size, 0)
     ];
     layout.layout_horizontal(fonts, text, &settings, &mut output);
     for glyph in output {

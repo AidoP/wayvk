@@ -85,7 +85,7 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 	vkCmdBindPipeline(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, vk->glyph_pipeline.pipeline);
 
 	#define strln(string) string, sizeof(string)-1
-	ft_draw_string(vk, strln("Hello, World!"), image_index);
+	ft_draw_string(vk, strln("Hello, World!"), 12.0f, image_index);
 
 	vkCmdEndRenderPass(vk->command_buffers[image_index]);
 	if (vkEndCommandBuffer(vk->command_buffers[image_index]) != VK_SUCCESS)
@@ -117,10 +117,15 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 		panic("Unable to present the swapchain");
 }
 
+static void key_event(void* data, struct session* session, uint8_t modifiers, uint32_t key) {
+
+}
+
 const struct session_handler term_session_handler = {
     .setup = term_setup,
     .cleanup = term_cleanup,
     .shown = term_shown,
     .hidden = term_hidden,
-    .update = term_update
+    .update = term_update,
+	.key_event = key_event
 };

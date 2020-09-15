@@ -61,7 +61,7 @@ Vulkan vk_setup(void) {
 	vk.present_mode = VK_PRESENT_MODE_FIFO_KHR;
 	vk.current_inflight = 0;
 
-	vk.ft = ft_load();
+	vk.ft = ft_load("/usr/share/fonts/noto/NotoSans-Regular.ttf", 12.0f);
 
 	VkApplicationInfo vk_appinfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -546,7 +546,7 @@ Vulkan vk_setup(void) {
 	if (vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &vk_pipeline_info, NULL, &vk.glyph_pipeline.pipeline) != VK_SUCCESS)
 		panic("Unable to create graphics pipeline");
 
-	ft_raster(&vk.ft, &vk);
+	ft_raster(&vk.ft, &vk, 12.0f);
 
 	return vk;
 }

@@ -1,12 +1,12 @@
 # Wayvk
+An experimental Wayland compositor and hardware-accelerated console emulator using Vulkan with the `VK_KHR_display` extension.
 
-An experimental Wayland compositor using Vulkan with the `VK_KHR_display` extension
-
-## Building
-
+# Building
+Requires both GCC and Rust.
 Simply run `./build.sh`
 
-### Dependencies
-
+## Dependencies
 - Wayland
 - Vulkan
+- libinput
+- udev / eudev
