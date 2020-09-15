@@ -158,7 +158,7 @@ int main(void) {
 									active_session = session;
 							}
 						default:
-							sessions_key_event(&sessions[active_session], key_modifiers, key_code);
+							session_key_event(&sessions[active_session], key_modifiers, key_code);
 							break;
 					}
 				}
