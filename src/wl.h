@@ -2,6 +2,8 @@
 
 #include <wayland-server-core.h>
 
+#include "session.h"
+
 typedef struct wl {
 	struct wl_display* display;
 	struct wl_event_loop* event_loop;
@@ -16,3 +18,5 @@ typedef struct wl {
 
 Wayland wl_setup(void);
 void wl_cleanup(Wayland*);
+
+const struct session_handler wl_session_handler;

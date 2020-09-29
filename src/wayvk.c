@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <libudev.h>
 #include <libinput.h>
@@ -63,7 +64,6 @@ int main(void) {
 	srand(17);
 
 	Vulkan vk = vk_setup();
-	Wayland wl = wl_setup();
 
 	struct udev* udev = udev_new();
 	struct libinput* li = libinput_udev_create_context(&input_callbacks, NULL, udev);
@@ -73,9 +73,8 @@ int main(void) {
 	uint_fast8_t key_modifiers = 0;
 
 	SessionHandler sessions[] = {
-		term_session_handler,
-		term_session_handler,
-		term_session_handler,
+		wl_session_handler,
+		error_session_handler
 	};
 	#define sessions_len (sizeof(sessions) / sizeof(SessionHandler))
 	uint_fast8_t active_session = 0;
@@ -95,8 +94,6 @@ int main(void) {
 				struct libinput_event_keyboard* li_key_event = libinput_event_get_keyboard_event(li_event);
 				uint32_t key_code = libinput_event_keyboard_get_key(li_key_event);
 				enum libinput_key_state key_state = libinput_event_keyboard_get_key_state(li_key_event);
-				printf("Got keycode %i\n", key_code);
-
 				uint_least8_t modifier_bitmask = 0;
 				switch (key_code) {
 					case KEY_LCTRL:
@@ -152,7 +149,6 @@ int main(void) {
 						case KEY_F9:
 						case KEY_F10:
 							if (key_modifiers == MODKEY) {
-								printf("Switching to %i out of %li\n", key_code - KEY_F1, sessions_len);
 								uint_fast8_t session = key_code - KEY_F1;
 								if (session < sessions_len)
 									active_session = session;
@@ -170,19 +166,19 @@ int main(void) {
 			}
 			libinput_event_destroy(li_event);
 		}
-		if (wl_event_loop_dispatch(wl.event_loop, 0))
-			running = false;
-		wl_display_flush_clients(wl.display);
 
 		// Update the active session
 		session_update(&vk, &sessions[active_session]);
+		// Background updates for other sessions
+		for (size_t index = 0; index < sessions_len; index++)
+			if (session_background_update(&sessions[index]))
+				sessions[index] = session_error(&vk, &sessions[index]);
 	}
 
 
 	// Clean up all the sessions
 	for (size_t index = 0; index < sessions_len; index++)
 		session_cleanup(&vk, &sessions[index]);
-	wl_cleanup(&wl);
 	vkDeviceWaitIdle(vk.device);
 	vk_cleanup(&vk);
 

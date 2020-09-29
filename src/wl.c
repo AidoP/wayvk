@@ -235,3 +235,51 @@ void wl_cleanup(Wayland* wl) {
 	wl_display_destroy(wl->display);
 }
 
+
+static struct session wl_session_setup(void** data, Vulkan* vk) {
+	struct wl* wl = *data = malloc(sizeof(struct wl));
+	*wl = wl_setup();
+
+    struct session session;
+    return session;
+}
+
+static void wl_session_cleanup(void* data, struct session* session, Vulkan* vk) {
+	wl_cleanup(data);
+}
+
+static void wl_session_shown(void* data, struct session* session, Vulkan* vk) {
+
+}
+static void wl_session_hidden(void* data, struct session* session, Vulkan* vk) {
+
+}
+static bool wl_session_update(void* data, struct session* session, Vulkan* vk) {
+	struct wl* wl = data;
+	bool error = false;
+	if (wl_event_loop_dispatch(wl->event_loop, 0))
+		error = false;
+	wl_display_flush_clients(wl->display);
+	return error;
+}
+static bool wl_session_background_update(void* data, struct session* session) {
+	struct wl* wl = data;
+	bool error = false;
+	if (wl_event_loop_dispatch(wl->event_loop, 0))
+		error = true;
+	wl_display_flush_clients(wl->display);
+	return error;
+}
+static void wl_session_key_event(void* data, struct session* session, uint8_t modifiers, uint32_t key) {
+
+}
+
+const struct session_handler wl_session_handler = {
+    .setup = wl_session_setup,
+    .cleanup = wl_session_cleanup,
+    .shown = wl_session_shown,
+    .hidden = wl_session_hidden,
+    .update = wl_session_update,
+	.background_update = wl_session_background_update,
+	.key_event = wl_session_key_event
+};

@@ -39,7 +39,7 @@ static void term_hidden(void* data, struct session* session, Vulkan* vk) {
 
 }
 
-static void term_update(void* data, struct session* session, Vulkan* vk) {
+static bool term_update(void* data, struct session* session, Vulkan* vk) {
 	struct term_data* term = data;
 	vk->current_inflight = (vk->current_inflight + 1) % VK_MAX_INFLIGHT;
 	InFlight* inflight = &vk->inflight[vk->current_inflight];
@@ -54,7 +54,7 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 			break;
 		case VK_TIMEOUT:
 		case VK_NOT_READY:
-			return;
+			return false;
 		case VK_SUBOPTIMAL_KHR:
 			TODO
 		default:
@@ -115,6 +115,8 @@ static void term_update(void* data, struct session* session, Vulkan* vk) {
 	};
 	if (vkQueuePresentKHR(vk->queue, &vk_present_info) != VK_SUCCESS)
 		panic("Unable to present the swapchain");
+
+	return false;
 }
 
 static void key_event(void* data, struct session* session, uint8_t modifiers, uint32_t key) {
