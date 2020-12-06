@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 /// An image with a view
 typedef struct {
@@ -31,6 +32,7 @@ typedef struct vk_inflight {
 
 typedef struct vk {
 	Font ft;
+	pthread_mutex_t mutex;
 
 	VkInstance instance;
 	VkPhysicalDevice physical_device;

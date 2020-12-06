@@ -26,8 +26,8 @@ wayland-scanner server-header $proto_wl src/protocol/wayland.h
 wayland-scanner private-code $proto_xdg_shell src/protocol/xdg_shell.c
 wayland-scanner server-header $proto_xdg_shell src/protocol/xdg_shell.h
 
-gcc -std=c11 -Wall -Werror\
+gcc -std=gnu11 -Wall -Werror\
 	"$(if [ $debug = 'DEBUG' ]; then echo '-g'; else echo '-O2'; fi)"\
-	src/*.c src/protocol/*.c src/wl/*.c "$rustpath/libwayvk.a"\
+	src/*.c src/*/*.c "$rustpath/libwayvk.a"\
 	-lwayland-server -lvulkan -ludev -linput -lpthread -ldl\
 	-o target/wayvk -D$debug

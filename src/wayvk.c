@@ -8,9 +8,10 @@
 #include <libinput.h>
 
 #include "vk.h"
-#include "wl.h"
-#include "session.h"
-#include "term.h"
+#include "session/session.h"
+#include "session/wl.h"
+#include "session/error.h"
+#include "session/term.h"
 
 static int open_file(const char* path, int flags, void* user_data) {
 	return open(path, flags);
@@ -60,6 +61,11 @@ enum keys {
 	KEY_CMD = 125,
 };
 
+const struct session* default_sessions[] = {
+	//&wl_session,
+	&error_session
+};
+
 int main(void) {
 	srand(17);
 
@@ -72,16 +78,13 @@ int main(void) {
 
 	uint_fast8_t key_modifiers = 0;
 
-	SessionHandler sessions[] = {
-		wl_session_handler,
-		error_session_handler
-	};
-	#define sessions_len (sizeof(sessions) / sizeof(SessionHandler))
+	SessionHandler* sessions[sizeof(default_sessions) / sizeof(struct session*)];
+	#define sessions_len (sizeof(sessions) / sizeof(SessionHandler*))
 	uint_fast8_t active_session = 0;
 
 	// Initialise all the sessions
 	for (size_t index = 0; index < sessions_len; index++)
-		session_setup(&vk ,&sessions[index]);
+		sessions[index] = session_setup(&vk, default_sessions[index]);
 
 	//wl_display_run(wl.display);
 
@@ -153,9 +156,13 @@ int main(void) {
 								if (session < sessions_len)
 									active_session = session;
 							}
-						default:
-							session_key_event(&sessions[active_session], key_modifiers, key_code);
-							break;
+						default: {
+							struct session_event_key key_event = {
+								.key = key_code,
+								.modifiers = key_modifiers
+							};
+							session_execute(sessions[active_session], (fn_session_generic)sessions[active_session]->session->key_event, &key_event);
+						} break;
 					}
 				}
 
@@ -168,17 +175,15 @@ int main(void) {
 		}
 
 		// Update the active session
-		session_update(&vk, &sessions[active_session]);
+		session_execute(sessions[active_session], (fn_session_generic)sessions[active_session]->session->update, NULL);
 		// Background updates for other sessions
 		for (size_t index = 0; index < sessions_len; index++)
-			if (session_background_update(&sessions[index]))
-				sessions[index] = session_error(&vk, &sessions[index]);
+			if (index != active_session)
+				session_execute(sessions[index], (fn_session_generic)sessions[index]->session->background_update, NULL);
 	}
 
-
-	// Clean up all the sessions
 	for (size_t index = 0; index < sessions_len; index++)
-		session_cleanup(&vk, &sessions[index]);
+		session_cleanup(sessions[index]);
 	vkDeviceWaitIdle(vk.device);
 	vk_cleanup(&vk);
 

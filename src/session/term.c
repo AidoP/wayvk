@@ -1,5 +1,5 @@
 #include "term.h"
-#include "util.h"
+#include "../util.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,18 +10,15 @@ struct term_data {
 	float colb;
 };
 
-static struct session term_setup(void** data, Vulkan* vk) {
+static void term_setup(void** data, Vulkan* vk) {
 	*data = malloc(sizeof(struct term_data));
 	struct term_data* term = *data;
 	term->colr = (float)(rand() % 1000) / 1000.0;
 	term->colg = (float)(rand() % 1000) / 1000.0;
 	term->colb = (float)(rand() % 1000) / 1000.0;
-    struct session session;
-
-    return session;
 }
 
-static void term_cleanup(void* data, struct session* session, Vulkan* vk) {
+static void term_cleanup(void* data, Vulkan* vk) {
 	//struct term_data* term = data;
 	//vkQueueWaitIdle(vk->queue);
 	//vkDeviceWaitIdle(vk->device);
@@ -31,15 +28,15 @@ static void term_cleanup(void* data, struct session* session, Vulkan* vk) {
 	//vkDestroyShaderModule(vk->device, session->frag_shader, NULL);
 }
 
-static void term_shown(void* data, struct session* session, Vulkan* vk) {
+static void term_shown(void* data, Vulkan* vk) {
 
 }
 
-static void term_hidden(void* data, struct session* session, Vulkan* vk) {
+static void term_hidden(void* data, Vulkan* vk) {
 
 }
 
-static bool term_update(void* data, struct session* session, Vulkan* vk) {
+static void term_update(void* data, Vulkan* vk) {
 	struct term_data* term = data;
 	vk->current_inflight = (vk->current_inflight + 1) % VK_MAX_INFLIGHT;
 	InFlight* inflight = &vk->inflight[vk->current_inflight];
@@ -54,7 +51,7 @@ static bool term_update(void* data, struct session* session, Vulkan* vk) {
 			break;
 		case VK_TIMEOUT:
 		case VK_NOT_READY:
-			return false;
+			return;
 		case VK_SUBOPTIMAL_KHR:
 			TODO
 		default:
@@ -115,15 +112,13 @@ static bool term_update(void* data, struct session* session, Vulkan* vk) {
 	};
 	if (vkQueuePresentKHR(vk->queue, &vk_present_info) != VK_SUCCESS)
 		panic("Unable to present the swapchain");
-
-	return false;
 }
 
-static void key_event(void* data, struct session* session, uint8_t modifiers, uint32_t key) {
+static void key_event(void* data, Vulkan* vk, struct session_event_key* event) {
 
 }
 
-const struct session_handler term_session_handler = {
+const struct session term_session = {
     .setup = term_setup,
     .cleanup = term_cleanup,
     .shown = term_shown,

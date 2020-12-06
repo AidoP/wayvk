@@ -19,4 +19,4 @@ typedef struct wl {
 Wayland wl_setup(void);
 void wl_cleanup(Wayland*);
 
-const struct session_handler wl_session_handler;
+const struct session wl_session;

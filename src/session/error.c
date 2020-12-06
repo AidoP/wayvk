@@ -1,24 +1,15 @@
-#include "session.h"
-#include "util.h"
+#include "error.h"
+#include "../util.h"
 
-static struct session error_session_setup(void** data, Vulkan* vk) {
-    struct session session;
+static void error_session_setup(void** data, Vulkan* vk) {}
 
-    return session;
-}
+static void error_session_cleanup(void* data, Vulkan* vk) {}
 
-static void error_session_cleanup(void* data, struct session* session, Vulkan* vk) {
-}
+static void error_session_shown(void* data, Vulkan* vk) {}
 
-static void error_session_shown(void* data, struct session* session, Vulkan* vk) {
+static void error_session_hidden(void* data, Vulkan* vk) {}
 
-}
-
-static void error_session_hidden(void* data, struct session* session, Vulkan* vk) {
-
-}
-
-static bool error_session_update(void* data, struct session* session, Vulkan* vk) {
+static void error_session_update(void* data, Vulkan* vk) {
 	vk->current_inflight = (vk->current_inflight + 1) % VK_MAX_INFLIGHT;
 	InFlight* inflight = &vk->inflight[vk->current_inflight];
 
@@ -32,7 +23,7 @@ static bool error_session_update(void* data, struct session* session, Vulkan* vk
 			break;
 		case VK_TIMEOUT:
 		case VK_NOT_READY:
-			return false;
+			return;
 		case VK_SUBOPTIMAL_KHR:
 			TODO
 		default:
@@ -63,7 +54,7 @@ static bool error_session_update(void* data, struct session* session, Vulkan* vk
 	vkCmdBindPipeline(vk->command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, vk->glyph_pipeline.pipeline);
 
 	#define strln(string) string, sizeof(string)-1
-	ft_draw_string(vk, strln("The session closed unexpectedly."), 12.0f, image_index);
+	ft_draw_string(vk, strln("The session closed unexpectedly."), 24.0f, image_index);
 
 	vkCmdEndRenderPass(vk->command_buffers[image_index]);
 	if (vkEndCommandBuffer(vk->command_buffers[image_index]) != VK_SUCCESS)
@@ -93,15 +84,13 @@ static bool error_session_update(void* data, struct session* session, Vulkan* vk
 	};
 	if (vkQueuePresentKHR(vk->queue, &vk_present_info) != VK_SUCCESS)
 		panic("Unable to present the swapchain");
-
-	return false;
 }
 
-static void error_session_key_event(void* data, struct session* session, uint8_t modifiers, uint32_t key) {
+static void error_session_key_event(void* data, Vulkan* vk, struct session_event_key* event) {
 
 }
 
-const struct session_handler error_session_handler = {
+const struct session error_session = {
     .setup = error_session_setup,
     .cleanup = error_session_cleanup,
     .shown = error_session_shown,

@@ -3,15 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define __USE_POSIX199309
 #include <time.h>
 
-#include "util.h"
+#include "../util.h"
 
-#include "protocol/wayland.h"
-#include "protocol/xdg_shell.h"
+#include "../protocol/wayland.h"
+#include "../protocol/xdg_shell.h"
 
-#include "wl/xdg_wm_base.h"
+#include "../wl/xdg_wm_base.h"
 
 struct rect {
 	uint32_t x;
@@ -236,45 +235,38 @@ void wl_cleanup(Wayland* wl) {
 }
 
 
-static struct session wl_session_setup(void** data, Vulkan* vk) {
+static void wl_session_setup(void** data, Vulkan* vk) {
 	struct wl* wl = *data = malloc(sizeof(struct wl));
 	*wl = wl_setup();
-
-    struct session session;
-    return session;
 }
 
-static void wl_session_cleanup(void* data, struct session* session, Vulkan* vk) {
+static void wl_session_cleanup(void* data, Vulkan* vk) {
 	wl_cleanup(data);
 }
 
-static void wl_session_shown(void* data, struct session* session, Vulkan* vk) {
+static void wl_session_shown(void* data, Vulkan* vk) {
 
 }
-static void wl_session_hidden(void* data, struct session* session, Vulkan* vk) {
+static void wl_session_hidden(void* data, Vulkan* vk) {
 
 }
-static bool wl_session_update(void* data, struct session* session, Vulkan* vk) {
+static void wl_session_update(void* data, Vulkan* vk) {
 	struct wl* wl = data;
-	bool error = false;
 	if (wl_event_loop_dispatch(wl->event_loop, 0))
-		error = false;
+		/* error */;
 	wl_display_flush_clients(wl->display);
-	return error;
 }
-static bool wl_session_background_update(void* data, struct session* session) {
+static void wl_session_background_update(void* data) {
 	struct wl* wl = data;
-	bool error = false;
 	if (wl_event_loop_dispatch(wl->event_loop, 0))
-		error = true;
+		/* error */;
 	wl_display_flush_clients(wl->display);
-	return error;
 }
-static void wl_session_key_event(void* data, struct session* session, uint8_t modifiers, uint32_t key) {
+static void wl_session_key_event(void* data, Vulkan* vk, struct session_event_key* event) {
 
 }
 
-const struct session_handler wl_session_handler = {
+const struct session wl_session = {
     .setup = wl_session_setup,
     .cleanup = wl_session_cleanup,
     .shown = wl_session_shown,

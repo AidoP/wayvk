@@ -61,7 +61,8 @@ Vulkan vk_setup(void) {
 	vk.present_mode = VK_PRESENT_MODE_FIFO_KHR;
 	vk.current_inflight = 0;
 
-	vk.ft = ft_load("/usr/share/fonts/noto/NotoSans-Regular.ttf", 12.0f);
+	vk.ft = ft_load("/usr/share/fonts/noto/NotoSans-Regular.ttf", 24.0f);
+	pthread_mutex_init(&vk.mutex, NULL);
 
 	VkApplicationInfo vk_appinfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -546,7 +547,9 @@ Vulkan vk_setup(void) {
 	if (vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &vk_pipeline_info, NULL, &vk.glyph_pipeline.pipeline) != VK_SUCCESS)
 		panic("Unable to create graphics pipeline");
 
+	// Pre-raster font images
 	ft_raster(&vk.ft, &vk, 12.0f);
+	ft_raster(&vk.ft, &vk, 24.0f);
 
 	return vk;
 }
@@ -577,6 +580,8 @@ void vk_cleanup(Vulkan* vk) {
 	vkDestroySurfaceKHR(vk->instance, vk->surface, NULL);
 	vkDestroyDevice(vk->device, NULL);
 	vkDestroyInstance(vk->instance, NULL);
+
+	pthread_mutex_destroy(&vk->mutex);
 }
 
 InFlight vk_inflight_setup(Vulkan* vk) {
