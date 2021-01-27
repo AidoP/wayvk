@@ -6,18 +6,22 @@ void* session_thread_main(void* args) {
     handler->session->setup(&handler->data, handler->vk);
 
     while (true) {
+        // Await next command
+        pthread_barrier_wait(&handler->barrier);
+        // Allow the main thread to modify handler without a data race on the mutex
         pthread_barrier_wait(&handler->barrier);
 
+        // TODO: mutex should not be needed with the barrier gate, assert this
         pthread_mutex_lock(&handler->mutex);
+        
         pthread_mutex_lock(&handler->vk->mutex);
-        handler->function(&handler->data, handler->vk, handler->args);
-        pthread_mutex_unlock(&handler->mutex);
+        handler->function(handler->data, handler->vk, handler->args);
         pthread_mutex_unlock(&handler->vk->mutex);
 
         if (handler->session == NULL) {
-            pthread_barrier_wait(&handler->barrier);
             return NULL;
         }
+        pthread_mutex_unlock(&handler->mutex);
     }
 }
 
@@ -33,12 +37,14 @@ struct session_handler* session_setup(Vulkan* vk, const struct session* session)
 }
 
 void session_cleanup(SessionHandler* handler) {
+    pthread_barrier_wait(&handler->barrier);
     pthread_mutex_lock(&handler->mutex);
     handler->function = (fn_session_generic)handler->session->cleanup;
-    pthread_mutex_unlock(&handler->mutex);
 
+    // When behind the mutex and/or only one barrier, which should be more than enough,
+    // this change is not observed in the waiting thread...
     handler->session = NULL;
-    pthread_barrier_wait(&handler->barrier);
+    pthread_mutex_unlock(&handler->mutex);
     pthread_barrier_wait(&handler->barrier);
 
     pthread_join(handler->thread_id, NULL);
@@ -47,6 +53,7 @@ void session_cleanup(SessionHandler* handler) {
 }
 
 void session_execute(SessionHandler* handler, fn_session_generic function, void* args) {
+    pthread_barrier_wait(&handler->barrier);
     pthread_mutex_lock(&handler->mutex);
     handler->function = function;
     handler->args = args;

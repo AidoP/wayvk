@@ -502,15 +502,21 @@ Vulkan vk_setup(void) {
 		.codeSize = vert_shader_len,
 		.pCode = (uint32_t*)vert_shader
 	};
-	if (vkCreateShaderModule(vk.device, &vk_vert_shader_info, NULL, &vk.glyph_pipeline.vert_shader) != VK_SUCCESS)
+	if (vkCreateShaderModule(vk.device, &vk_vert_shader_info, NULL, &vk.glyph_pipeline.vert_shader) != VK_SUCCESS) {
+		free(vert_shader);
 		panic("Unable to create vertex shader module");
+	}
+	free(vert_shader);
 	VkShaderModuleCreateInfo vk_frag_shader_info = {
 		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 		.codeSize = frag_shader_len,
 		.pCode = (uint32_t*)frag_shader
 	};
-	if (vkCreateShaderModule(vk.device, &vk_frag_shader_info, NULL, &vk.glyph_pipeline.frag_shader) != VK_SUCCESS)
+	if (vkCreateShaderModule(vk.device, &vk_frag_shader_info, NULL, &vk.glyph_pipeline.frag_shader) != VK_SUCCESS) {
+		free(frag_shader);
 		panic("Unable to create fragment shader module");
+	}
+	free(frag_shader);
 	
 	VkPipelineShaderStageCreateInfo vk_vert_stage_info = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -572,6 +578,7 @@ void vk_cleanup(Vulkan* vk) {
 
 	for (int index = 0; index < vk->swapchain_image_len; index++)
 		vkDestroyFramebuffer(vk->device, vk->framebuffers[index], NULL);
+	free(vk->framebuffers);
 	vkDestroyRenderPass(vk->device, vk->renderpass, NULL);
 	for (int index = 0; index < vk->swapchain_image_len; index++)
 		vkDestroyImageView(vk->device, vk->swapchain_images[index].view, NULL);

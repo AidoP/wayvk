@@ -62,7 +62,7 @@ enum keys {
 };
 
 const struct session* default_sessions[] = {
-	//&wl_session,
+	&wl_session,
 	&error_session
 };
 
@@ -70,6 +70,8 @@ int main(void) {
 	srand(17);
 
 	Vulkan vk = vk_setup();
+	vk_cleanup(&vk);
+	return 0;
 
 	struct udev* udev = udev_new();
 	struct libinput* li = libinput_udev_create_context(&input_callbacks, NULL, udev);
@@ -85,8 +87,6 @@ int main(void) {
 	// Initialise all the sessions
 	for (size_t index = 0; index < sessions_len; index++)
 		sessions[index] = session_setup(&vk, default_sessions[index]);
-
-	//wl_display_run(wl.display);
 
 	bool running = true;
 	while (running) {
@@ -178,7 +178,7 @@ int main(void) {
 		session_execute(sessions[active_session], (fn_session_generic)sessions[active_session]->session->update, NULL);
 		// Background updates for other sessions
 		for (size_t index = 0; index < sessions_len; index++)
-			if (index != active_session)
+			if (index != active_session && sessions[index]->session->background_update)
 				session_execute(sessions[index], (fn_session_generic)sessions[index]->session->background_update, NULL);
 	}
 

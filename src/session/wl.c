@@ -62,6 +62,12 @@ static void destroy_surface(struct wl_resource* resource) {
 static void surface_destroy(struct wl_client* client, struct wl_resource* resource) {
 	wl_resource_destroy(resource);
 }
+static void surface_attach(struct wl_client* client, struct wl_resource* resource, struct wl_resource* buffer, int32_t width, int32_t height) {
+
+}
+static void surface_damage(struct wl_client* client, struct wl_resource* resource, int32_t x, int32_t y, int32_t width, int32_t height) {
+
+}
 static void surface_frame(struct wl_client* client, struct wl_resource* resource, uint32_t callback) {
 	struct wl_resource* callback_resource = wl_resource_create(client, &wl_callback_interface, wl_callback_interface.version, callback);
 
@@ -71,7 +77,7 @@ static void surface_frame(struct wl_client* client, struct wl_resource* resource
 	wl_resource_destroy(callback_resource);
 }
 static void surface_set_opaque_region(struct wl_client* client, struct wl_resource* resource, struct wl_resource* region) {
-	TODO
+	//TODO
 }
 static void surface_commit(struct wl_client* client, struct wl_resource* resource) {
 	struct surface* surface_data = wl_resource_get_user_data(resource);
@@ -80,10 +86,12 @@ static void surface_commit(struct wl_client* client, struct wl_resource* resourc
 	surface_data->current = surface_data->pending;
 }
 static void surface_set_buffer_scale(struct wl_client* client, struct wl_resource* resource, int32_t scale) {
-	TODO
+	//TODO
 }
 static const struct wl_surface_interface implement_surface = {
 	.destroy = surface_destroy,
+	.attach = surface_attach,
+	.damage = surface_damage,
 	.frame = surface_frame,
 	.set_opaque_region = surface_set_opaque_region,
 	.commit = surface_commit,
@@ -125,7 +133,7 @@ static void register_output(struct wl_client* client, void* data, uint32_t versi
 	struct wl_resource* resource = wl_resource_create(client, &wl_output_interface, wl_output_interface.version, id);
 	wl_resource_set_implementation(resource, &implement_output, NULL, destroy_output);
 
-	TODO
+	//TODO
 	wl_output_send_geometry(resource, 0, 0, 300, 170, WL_OUTPUT_SUBPIXEL_UNKNOWN, "Unknown", "0x07B5", WL_OUTPUT_TRANSFORM_NORMAL);
 	wl_output_send_mode(resource, WL_OUTPUT_MODE_CURRENT, 1366, 768, 59994);
 	wl_output_send_scale(resource, 1);
@@ -202,29 +210,29 @@ void handle_client_created(struct wl_listener* listener, struct wl_client* clien
 
 struct wl_listener client_created_listener = { .notify = (wl_notify_func_t)handle_client_created };
 
-Wayland wl_setup() {
-	Wayland wl;
+static void wl_session_setup(void** data, Vulkan* vk) {
+	*data = malloc(sizeof(struct wl));
+	Wayland* wl = *data;
 
-	wl.display = wl_display_create();
-	wl_display_add_socket_auto(wl.display);
+	wl->display = wl_display_create();
+	wl_display_add_socket_auto(wl->display);
 
-	wl.global_compositor = wl_global_create(wl.display, &wl_compositor_interface, wl_compositor_interface.version, NULL, register_compositor);
-	wl.global_output = wl_global_create(wl.display, &wl_output_interface, wl_output_interface.version, NULL, register_output);
-	wl.global_seat = wl_global_create(wl.display, &wl_seat_interface, wl_seat_interface.version, NULL, register_seat);
-	wl.global_data_device_manager = wl_global_create(wl.display, &wl_data_device_manager_interface, wl_data_device_manager_interface.version, NULL, register_data_device_manager);
-	wl.global_xdg_wm_base = wl_global_create(wl.display, &xdg_wm_base_interface, xdg_wm_base_interface.version, NULL, register_xdg_wm_base);
+	wl->global_compositor = wl_global_create(wl->display, &wl_compositor_interface, wl_compositor_interface.version, NULL, register_compositor);
+	wl->global_output = wl_global_create(wl->display, &wl_output_interface, wl_output_interface.version, NULL, register_output);
+	wl->global_seat = wl_global_create(wl->display, &wl_seat_interface, wl_seat_interface.version, NULL, register_seat);
+	wl->global_data_device_manager = wl_global_create(wl->display, &wl_data_device_manager_interface, wl_data_device_manager_interface.version, NULL, register_data_device_manager);
+	wl->global_xdg_wm_base = wl_global_create(wl->display, &xdg_wm_base_interface, xdg_wm_base_interface.version, NULL, register_xdg_wm_base);
 
-	wl_display_init_shm(wl.display);
+	wl_display_init_shm(wl->display);
 	//wl_display_add_shm_format(wl.display, WL_SHM_FORMAT_ARGB8888);
 	//wl_display_add_shm_format(wl.display, WL_SHM_FORMAT_XRGB8888);
 
-	wl_display_add_client_created_listener(wl.display, &client_created_listener);
-	wl.event_loop = wl_display_get_event_loop(wl.display);
-
-	return wl;
+	wl_display_add_client_created_listener(wl->display, &client_created_listener);
+	wl->event_loop = wl_display_get_event_loop(wl->display);
 }
 
-void wl_cleanup(Wayland* wl) {
+static void wl_session_cleanup(void* data, Vulkan* vk) {
+	Wayland* wl = data;
 	wl_global_destroy(wl->global_compositor);
 	wl_global_destroy(wl->global_output);
 	wl_global_destroy(wl->global_seat);
@@ -232,18 +240,12 @@ void wl_cleanup(Wayland* wl) {
 	wl_global_destroy(wl->global_xdg_wm_base);
 
 	wl_display_destroy(wl->display);
+
+	free(data);
 }
 
-
-static void wl_session_setup(void** data, Vulkan* vk) {
-	struct wl* wl = *data = malloc(sizeof(struct wl));
-	*wl = wl_setup();
-}
-
-static void wl_session_cleanup(void* data, Vulkan* vk) {
-	wl_cleanup(data);
-}
-
+/// The time in milliseconds to block during the wayland event loop to reduce resource usage as this thread has little work to do
+#define WL_UPDATE_BLOCK_DELAY 1
 static void wl_session_shown(void* data, Vulkan* vk) {
 
 }
@@ -252,13 +254,13 @@ static void wl_session_hidden(void* data, Vulkan* vk) {
 }
 static void wl_session_update(void* data, Vulkan* vk) {
 	struct wl* wl = data;
-	if (wl_event_loop_dispatch(wl->event_loop, 0))
+	if (wl_event_loop_dispatch(wl->event_loop, 1))
 		/* error */;
 	wl_display_flush_clients(wl->display);
 }
 static void wl_session_background_update(void* data) {
 	struct wl* wl = data;
-	if (wl_event_loop_dispatch(wl->event_loop, 0))
+	if (wl_event_loop_dispatch(wl->event_loop, 1))
 		/* error */;
 	wl_display_flush_clients(wl->display);
 }

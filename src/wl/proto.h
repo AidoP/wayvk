@@ -12,4 +12,4 @@
 // The delay before sending a configure event.
 // Applies to xdg_surface and wl_surface
 // This should allow for other possible surface events to be retrieved and processed
-#define CONFIGURE_DELAY 5
+#define CONFIGURE_DELAY 1
