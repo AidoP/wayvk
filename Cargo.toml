@@ -1,12 +1,16 @@
 [package]
 name = "wayvk"
 version = "0.0.1"
-authors = ["AidoP"]
-edition = "2018"
-
-[lib]
-crate-type = ["staticlib"]
+edition = "2021"
 
 [dependencies]
-fontdue = "0.2"
-ash = "0.31"
+config = { path = "../config" }
+ash = { version = "0.35.1", default-features = false, features = ["linked", "debug"]}
+gpu-allocator = { version = "0.15.1", default-features = false, features = ["vulkan"] }
+wl = { path = "../wl" }
+wl-wayland = { path = "../wl-wayland", features = ["unsealed_shm"] }
+#wl = { git = "https://github.com/AidoP/wl" }
+#wl-wayland = { git = "https://github.com/AidoP/wl-wayland", features = ["unsealed_shm"] }
+
+[build-dependencies]
+shaderc = "0.7.4"

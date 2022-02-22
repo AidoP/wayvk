@@ -1,0 +1,286 @@
+name = "notification"
+copyright = "Copyright © 2022 Aidan Prangnell"
+
+[[interface]]
+name = "wp_notifier"
+summary = "Global object for creating notifications"
+description = ""
+version = 1
+
+[[interface.request]]
+name = "notify"
+summary = "Display a notification"
+description = """
+Creates a notification that will be presented to the user.
+
+See wp_notification for more information
+"""
+
+[[interface.request.arg]]
+name = "id"
+type = "new_id"
+interface = "wp_notification"
+summary = "The notification object"
+
+[[interface.request.arg]]
+name = "title"
+type = "string"
+summary = "The primary text identifying the notification to the user"
+
+[[interface.request.arg]]
+name = "persist"
+type = "uint"
+summary = "Specifies if the notification should persist after the client disconnects. 0 if not persistent."
+
+[[interface]]
+name = "wp_notification"
+summary = "A notification that is being displayed to the user"
+description = """
+A notification that is actively presented to the user in some form.
+
+Notifications may have interactable actions associated with them allowing basic user input.
+The notification will be destroyed by the server once the notification is no longer available, such as due to a timeout or dismissal by the user.
+
+"""
+version = 1
+
+[[interface.enum]]
+name = "level"
+summary = "The urgency level of a notification"
+
+[[interface.enum.entry]]
+name = "informational"
+summary = "Not urgent. The notification will be shown briefly and will appear unobtrusive"
+value = 0
+
+[[interface.enum.entry]]
+name = "warning"
+summary = "Somewhat urgent. The notification will be shown briefly and will appear in a more obtrusive fashion"
+value = 1
+
+[[interface.enum.entry]]
+name = "critical"
+summary = "Highly urgent. The notification may require manual dismissal and may attempt to capture user focus"
+value = 2
+
+[[interface.enum.entry]]
+name = "logging"
+summary = "The notification will not be presented directly to the user, but may be visible in a notification log"
+value = 3
+
+[[interface.enum]]
+name = "action"
+summary = "The user performed an action on the notification"
+
+[[interface.enum.entry]]
+name = "accept"
+summary = "The accept button was pressed"
+value = 0
+
+[[interface.enum.entry]]
+name = "decline"
+summary = "The decline button was pressed"
+value = 1
+
+[[interface.enum.entry]]
+name = "play"
+summary = "The play media button was pressed"
+value = 2
+
+[[interface.enum.entry]]
+name = "pause"
+summary = "The pause media button was pressed"
+value = 3
+
+[[interface.enum.entry]]
+name = "next"
+summary = "The next media item button was pressed"
+value = 4
+
+[[interface.enum.entry]]
+name = "previous"
+summary = "The previous media item button was pressed"
+value = 5
+
+[[interface.enum.entry]]
+name = "timestamp"
+summary = "A timestamp for the media item to skip playback to was selected"
+value = 6
+
+[[interface.enum.entry]]
+name = "message"
+summary = "The user input a message in response to the notification"
+value = 7
+
+[[interface.request]]
+name = "set_title"
+
+[[interface.request]]
+name = "set_image"
+summary = "Associate an image with the notification"
+description = """
+Mutually exclusive with a buffer.
+
+Set an image to display alongside the notification. The file must contain a png or jpeg image. The image may be cropped and scaled as desired by the compositor.
+It is not a protocol error for the image to be invalid, instead the event will be ignored by the compositor.
+"""
+
+[[interface.request.arg]]
+name = "file"
+type = "fd"
+
+[[interface.request]]
+name = "set_buffer"
+summary = "Associate a buffer with the notification"
+description = """
+Mutually exclusive with an image.
+
+Set a buffer to display alongside the notification. The buffer size must be in the range specified by 
+"""
+
+[[interface.request.arg]]
+name = "buffer"
+type = "object"
+interface = "wl_buffer"
+
+[[interface.request]]
+name = "set_plain"
+summary = "Set the notification type to a plain information display"
+
+[[interface.request.arg]]
+name = "description"
+type = "string"
+summary = "An extended description describing the notification"
+
+[[interface.request.arg]]
+name = "level"
+type = "uint"
+enum = "wp_notification.level"
+summary = "The urgency level"
+
+[[interface.request]]
+name = "set_confirm"
+summary = "A confirmation notification"
+description = "Set the notification type to a confirmation dialogue"
+
+[[interface.request.arg]]
+name = "request"
+type = "string"
+summary = "The request that the user is confirming or declining"
+
+[[interface.request.arg]]
+name = "accept"
+type = "string"
+summary = "The text displayed on the accept button. The compositor may ignore this"
+
+[[interface.request.arg]]
+name = "decline"
+type = "string"
+summary = "The text displayed on the decline button. The compositor may ignore this"
+
+[[interface.request.arg]]
+name = "level"
+type = "uint"
+enum = "wp_notification.level"
+summary = "The urgency level"
+
+[[interface.request]]
+name = "set_media"
+summary = "A media control notification"
+description = "Set the notification type to a media control dialogue"
+
+[[interface.request.arg]]
+name = "name"
+type = "string"
+summary = "The name of the media item. For example, a song or video title. It is a protocol error for this to be empty"
+
+[[interface.request.arg]]
+name = "from"
+type = "string"
+summary = "Where the media is from. For example, the album, playlist, URI, folder, or series name. May be empty"
+
+[[interface.request.arg]]
+name = "creator"
+type = "string"
+summary = "The creator of the media. For example, the artist, user handle or publisher. May be empty"
+
+[[interface.request.arg]]
+name = "length"
+type = "uint"
+summary = "The timespan of the media in seconds"
+
+[[interface.request]]
+name = "set_current_timestamp"
+summary = "Update the current media time"
+description = """
+Set the current timestamp of the media playback.
+It is a protocol error to send this request on a non-media notification or with the timestamp exceeding the length of the media
+"""
+
+[[interface.request.arg]]
+name = "timestamp"
+type = "uint"
+summary = "The current playback time in seconds"
+
+[[interface.request]]
+name = "set_input"
+summary = "A media control notification"
+description = "Set the notification type to a media control dialogue"
+
+[[interface.request.arg]]
+name = "request"
+type = "string"
+summary = "A short description prompting the user for input."
+
+[[interface.request.arg]]
+name = "submit"
+type = "string"
+summary = "The text displayed on the submit button. May be ignored by the compositor"
+
+[[interface.request]]
+name = "set_surface"
+summary = "A notification containing a wl_surface"
+description = "A notification containing a wl_surface, allowing arbitrary content and direct user input"
+
+[[interface.request.arg]]
+name = "surface"
+type = "object"
+interface = "wl_surface"
+
+[[interface.event]]
+name = "button_action"
+summary = "The user clicked a button on the notification"
+
+[[interface.event.arg]]
+name = "action"
+type = "uint"
+enum = "wp_notification.action"
+
+[[interface.event]]
+name = "range_action"
+summary = "The user selected a value in a range on the notification"
+
+[[interface.event.arg]]
+name = "action"
+type = "uint"
+enum = "wp_notification.action"
+
+[[interface.event.arg]]
+name = "value"
+type = "uint"
+summary = "The value within the range"
+
+
+[[interface.event]]
+name = "input_action"
+summary = "The user input text on the notification"
+
+[[interface.event.arg]]
+name = "action"
+type = "uint"
+enum = "wp_notification.action"
+
+[[interface.event.arg]]
+name = "input"
+type = "string"
+summary = "The input string"
