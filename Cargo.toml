@@ -4,9 +4,11 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-config = { path = "../config" }
-ash = { version = "0.35.1", default-features = false, features = ["linked", "debug"]}
+config = { git = "https://github.com/AidoP/config" }
+drm = { path = "../dri" }
+ash = { git = "https://github.com/ash-rs/ash", default-features = false, features = ["linked", "debug"]}
 gpu-allocator = { version = "0.15.1", default-features = false, features = ["vulkan"] }
+syslib = { path = "../syslib" }
 wl = { path = "../wl" }
 wl-wayland = { path = "../wl-wayland", features = ["unsealed_shm"] }
 #wl = { git = "https://github.com/AidoP/wl" }

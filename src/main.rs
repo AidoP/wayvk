@@ -3,17 +3,18 @@ use config::prelude::*;
 use wl::server::prelude::*;
 use wl_wayland::server::prelude::*;
 
-mod graphics;
+mod error;
+mod vulkan;
 mod wayland;
 mod xdg_shell;
 
 pub mod common {
-    pub use crate::{Wayvk};
+    pub use crate::{ error::{ Error, Result }, Wayvk };
 }
 
 #[derive(Config)]
 pub struct Wayvk {
-    graphics: graphics::Config
+    graphics: vulkan::Config
 }
 impl Default for Wayvk {
     fn default() -> Self {
@@ -25,7 +26,12 @@ impl Default for Wayvk {
 
 fn main() {
     let config = Wayvk::load("wayvk");
-    let graphics = config.graphics.backend.new().unwrap();
+    let vulkan = vulkan::Vulkan::new().unwrap();
+    println!("{:#?}", vulkan);
+
+    return;
+
+    //dri::Device::open(path)
     
     let mut listener = EventListener::new().unwrap();
     let mut display = WlDisplay::new(vec![]);

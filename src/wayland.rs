@@ -5,7 +5,7 @@ use wl_wayland::server::{
     error,
     DisplayError,
     BufferAccess,
-    wayland::*,
+    wayland,
     WlDisplay as Display,
     WlCallback as Callback,
     WlRegistry as Registry,
@@ -188,6 +188,7 @@ impl WlSurface for Lease<Surface> {
         Ok(())
     }
     fn frame(&mut self, client: &mut Client, callback: NewId) -> Result<()> {
+        use wayland::WlCallback;
         // TODO: signal when a good time would be
         //let mut display = Display::get(client)?;
         //display.delete_id(client, callback.object())?;
