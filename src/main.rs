@@ -26,7 +26,12 @@ impl Default for Wayvk {
 
 fn main() {
     let config = Wayvk::load("wayvk");
-    let vulkan = vulkan::Vulkan::new().unwrap();
+    let mut vulkan = vulkan::Vulkan::new().unwrap();
+
+    loop {
+        vulkan.render().unwrap();
+    }
+
     println!("{:#?}", vulkan);
 
     return;

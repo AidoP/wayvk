@@ -5,6 +5,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
+    Io(std::io::Error),
     Vulkan(ash::vk::Result),
     Drm(drm::Error),
     /// The Vulkan device does not support `VK_EXT_physical_device_drm` or did not provide DRM device major/minors.
@@ -25,6 +26,12 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         todo!()
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
     }
 }
 
