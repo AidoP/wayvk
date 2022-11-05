@@ -1,6 +1,6 @@
 use std::fmt;
 use config::prelude::*;
-use wl::server::prelude::*;
+use yutani::server::prelude::*;
 
 mod error;
 mod vulkan;
@@ -22,7 +22,7 @@ impl Default for Wayvk {
     }
 }
 
-struct State {
+pub struct State {
     config: Wayvk,
     vulkan: vulkan::Vulkan
 }
@@ -30,15 +30,15 @@ struct State {
 fn main() {
     let state = State {
         config: Wayvk::load("wayvk"),
-        vulkan: vulkan::Vulkan::new().unwrap()
+        vulkan: vulkan::Vulkan::dummy().unwrap()//::new().unwrap()
     };
 
     //dri::Device::open(path)
-    let path = wl::find_free_socket();
+    let path = yutani::find_free_socket();
     syslib::unlink(&path).ok();
     let mut event_loop = Server::event_loop(path, state, wayland::Display::constructor).unwrap();
     loop {
-        event_loop.wait(0).unwrap();
+        event_loop.wait(100).unwrap();
     }
 }
 

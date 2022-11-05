@@ -9,11 +9,9 @@ drm = { path = "../dri" }
 ash = { git = "https://github.com/ash-rs/ash", default-features = false, features = ["linked", "debug"]}
 gpu-allocator = { version = "0.15.1", default-features = false, features = ["vulkan"] }
 syslib = { path = "../syslib" }
-wl = { path = "../wl" }
-#wl = { git = "https://github.com/AidoP/wl" }
-#wl-wayland = { git = "https://github.com/AidoP/wl-wayland", features = ["unsealed_shm"] }
+yutani = { path = "../yutani" }
 
 [build-dependencies]
 shaderc = "0.7.4"
-wl-codegen = { path = "../wl-codegen" }
+yutani-codegen = { path = "../yutani-codegen" }
 heck = "0.4.0"

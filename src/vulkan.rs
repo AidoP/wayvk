@@ -101,6 +101,43 @@ impl Vulkan {
         vk::ExtDirectModeDisplayFn::name().as_ptr(),
     ];
 
+    /// Create a vulkan instance without initialising any devices
+    pub fn dummy() -> Result<Self> {
+        let entry = Entry::linked();
+        let app_info = vk::ApplicationInfo {
+            api_version: vk::make_api_version(0, 1, 2, 0),
+            p_application_name: Self::APP_NAME,
+            application_version: vk::make_api_version(
+                0,
+                env_int!("CARGO_PKG_VERSION_MAJOR"),
+                env_int!("CARGO_PKG_VERSION_MINOR"),
+                env_int!("CARGO_PKG_VERSION_PATCH")
+            ),
+            ..Default::default()
+        };
+        let create_info = vk::InstanceCreateInfo::default()
+            .application_info(&app_info)
+            .enabled_extension_names(&Self::EXTENSIONS)
+            .enabled_layer_names(Self::VALIDATION_LAYERS);
+        let instance = unsafe { entry.create_instance(&create_info, None) }?;
+
+        let display_khr = khr::Display::new(&entry, &instance);
+        let surface_khr = khr::Surface::new(&entry, &instance);
+        let acquire_drm_display_ext = ext::AcquireDrmDisplay::new(&entry, &instance);
+
+        Ok(Self {
+            entry,
+            instance,
+
+            display_khr,
+            surface_khr,
+            acquire_drm_display_ext,
+
+            devices: Vec::new(),
+            err_devices: Vec::new()
+        })
+    }
+
     pub fn new() -> Result<Self> {
         let entry = Entry::linked();
         let app_info = vk::ApplicationInfo {

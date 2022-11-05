@@ -4259,7 +4259,7 @@ specific wl_output global.
 The name is not guaranteed to be persistent across sessions, thus cannot
 be used to reliably identify an output in e.g. configuration files.
 
-Examples of names include 'HDMI-A-1', 'WL-1', 'X11-1', etc. However, do
+Examples of names include 'HDMI-A-1', 'yutani-1', 'X11-1', etc. However, do
 not assume that the name is a reflection of an underlying DRM connector,
 X11 connection, etc.
 
