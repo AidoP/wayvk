@@ -10,9 +10,10 @@ ash = { git = "https://github.com/ash-rs/ash", default-features = false, feature
 gpu-allocator = { version = "0.15.1", default-features = false, features = ["vulkan"] }
 syslib = { path = "../syslib" }
 wl = { path = "../wl" }
-wl-wayland = { path = "../wl-wayland", features = ["unsealed_shm"] }
 #wl = { git = "https://github.com/AidoP/wl" }
 #wl-wayland = { git = "https://github.com/AidoP/wl-wayland", features = ["unsealed_shm"] }
 
 [build-dependencies]
 shaderc = "0.7.4"
+wl-codegen = { path = "../wl-codegen" }
+heck = "0.4.0"

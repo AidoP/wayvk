@@ -104,7 +104,7 @@ impl Vulkan {
     pub fn new() -> Result<Self> {
         let entry = Entry::linked();
         let app_info = vk::ApplicationInfo {
-            api_version: vk::make_api_version(0, 1, 3, 0),
+            api_version: vk::make_api_version(0, 1, 2, 0),
             p_application_name: Self::APP_NAME,
             application_version: vk::make_api_version(
                 0,
@@ -147,6 +147,9 @@ impl Vulkan {
         Ok(vulkan)
     }
 
+    pub fn no_devices(&self) -> bool {
+        self.devices.is_empty()
+    }
     pub fn render(&mut self) -> Result<()> {
         for device in &mut self.devices {
             device.render()?;
@@ -201,7 +204,7 @@ impl Device {
         // Core 1.1 vk::KhrExternalMemoryFn::name(),
         ash::extensions::khr::ExternalMemoryFd::name(),
         vk::ExtExternalMemoryDmaBufFn::name(),
-        ash::extensions::ext::ImageDrmFormatModifier::name(),
+        ash::extensions::ext::ImageDrmFormatModifier::name()
 
         // Core 1.1 vk::KhrBindMemory2Fn::name(),
         // Core 1.2 vk::KhrImageFormatListFn::name(),
@@ -439,13 +442,14 @@ pub struct Display {
 }
 impl Display {
     pub fn new(vulkan: &Vulkan, device: &Device, connector: Connector) -> Result<Self> {
+        use syslib::FileDescriptor;
         let display = unsafe { vulkan.acquire_drm_display_ext.get_drm_display(
             device.physical_device,
-            device.drm.raw_fd() as i32,
+            device.drm.fd().raw() as i32,
             connector.id
         )? };
 
-        unsafe { vulkan.acquire_drm_display_ext.acquire_drm_display(device.physical_device, device.drm.raw_fd() as i32, display) }.ok();
+        unsafe { vulkan.acquire_drm_display_ext.acquire_drm_display(device.physical_device, device.drm.fd().raw() as i32, display) }.ok();
 
         let modes = unsafe { vulkan.display_khr.get_display_mode_properties(device.physical_device, display)? };
 
