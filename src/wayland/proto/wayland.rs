@@ -116,14 +116,34 @@ pub trait r#WlDisplay<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`code`: error code"]
     #[doc = "\n`message`: error description"]
     fn r#error(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#object_id: ::yutani::Id,
         r#code: ::core::primitive::u32,
         r#message: &'_ ::core::primitive::str,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_display",
+                    "@{}.",
+                    "error",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#object_id,
+                r#code,
+                r#message,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_object(Some(r#object_id))?;
         _stream.send_u32(r#code)?;
         _stream.send_string(::core::option::Option::Some(r#message))?;
@@ -136,12 +156,20 @@ pub trait r#WlDisplay<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`id`: deleted object ID"]
     fn r#delete_id(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#id: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_display", "@{}.", "delete_id", "(", "{:?}", ")"),
+                _this.id(),
+                r#id,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#id)?;
         _stream.commit(_key)
     }
@@ -275,14 +303,34 @@ pub trait r#WlRegistry<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`interface`: interface implemented by the object"]
     #[doc = "\n`version`: interface version"]
     fn r#global(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#name: ::core::primitive::u32,
         r#interface: &'_ ::core::primitive::str,
         r#version: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_registry",
+                    "@{}.",
+                    "global",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#name,
+                r#interface,
+                r#version,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#name)?;
         _stream.send_string(::core::option::Option::Some(r#interface))?;
         _stream.send_u32(r#version)?;
@@ -295,12 +343,28 @@ pub trait r#WlRegistry<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`name`: numeric name of the global object"]
     fn r#global_remove(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#name: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_registry",
+                    "@{}.",
+                    "global_remove",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#name,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#name)?;
         _stream.commit(_key)
     }
@@ -362,12 +426,20 @@ pub trait r#WlCallback<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`callback_data`: request-specific data for the callback"]
     fn r#done(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#callback_data: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_callback", "@{}.", "done", "(", "{:?}", ")"),
+                _this.id(),
+                r#callback_data,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#callback_data)?;
         _stream.commit(_key)
     }
@@ -742,12 +814,20 @@ pub trait r#WlShm<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`format`: buffer pixel format"]
     fn r#format(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#format: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_shm", "@{}.", "format", "(", "{:?}", ")"),
+                _this.id(),
+                r#format,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#format)?;
         _stream.commit(_key)
     }
@@ -1306,11 +1386,18 @@ pub trait r#WlBuffer<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "Sent when this wl_buffer is no longer used by the compositor.\nThe client is now free to reuse or destroy this buffer and its\nbacking storage.\n\nIf a client receives a release event before the frame callback\nrequested in the same wl_surface.commit that attaches this\nwl_buffer to a surface, then the client is immediately free to\nreuse the buffer and its backing storage, and does not need a\nsecond buffer for the next surface content update. Typically\nthis is possible, when the compositor maintains a copy of the\nwl_surface contents, e.g. as a GL texture. This is an important\noptimization for GL(ES) compositors with wl_shm clients."]
     fn r#release(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_buffer", "@{}.", "release", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.commit(_key)
     }
 }
@@ -1532,12 +1619,20 @@ pub trait r#WlDataOffer<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`mime_type`: offered mime type"]
     fn r#offer(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#mime_type: &'_ ::core::primitive::str,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_offer", "@{}.", "offer", "(", "{:?}", ")"),
+                _this.id(),
+                r#mime_type,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_string(::core::option::Option::Some(r#mime_type))?;
         _stream.commit(_key)
     }
@@ -1550,12 +1645,28 @@ pub trait r#WlDataOffer<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`source_actions`: actions offered by the data source"]
     fn r#source_actions(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#source_actions: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_offer",
+                    "@{}.",
+                    "source_actions",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#source_actions,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#source_actions)?;
         _stream.commit(_key)
     }
@@ -1568,12 +1679,20 @@ pub trait r#WlDataOffer<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`dnd_action`: action selected by the compositor"]
     fn r#action(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#dnd_action: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_offer", "@{}.", "action", "(", "{:?}", ")"),
+                _this.id(),
+                r#dnd_action,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_u32(r#dnd_action)?;
         _stream.commit(_key)
     }
@@ -1747,12 +1866,20 @@ pub trait r#WlDataSource<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`mime_type`: mime type accepted by the target"]
     fn r#target(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#mime_type: ::core::option::Option<&'_ ::core::primitive::str>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_source", "@{}.", "target", "(", "{:?}", ")"),
+                _this.id(),
+                r#mime_type,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_string(r#mime_type)?;
         _stream.commit(_key)
     }
@@ -1764,13 +1891,31 @@ pub trait r#WlDataSource<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`mime_type`: mime type for the data"]
     #[doc = "\n`fd`: file descriptor for the data"]
     fn r#send(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#mime_type: &'_ ::core::primitive::str,
         r#fd: ::yutani::Fd<'static>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_source",
+                    "@{}.",
+                    "send",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#mime_type,
+                r#fd,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_string(::core::option::Option::Some(r#mime_type))?;
         _stream.send_file(r#fd)?;
         _stream.commit(_key)
@@ -1779,11 +1924,18 @@ pub trait r#WlDataSource<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This data source is no longer valid. There are several reasons why\nthis could happen:\n\n- The data source has been replaced by another data source.\n- The drag-and-drop operation was performed, but the drop destination\ndid not accept any of the mime types offered through\nwl_data_source.target.\n- The drag-and-drop operation was performed, but the drop destination\ndid not select any of the actions present in the mask offered through\nwl_data_source.action.\n- The drag-and-drop operation was performed but didn't happen over a\nsurface.\n- The compositor cancelled the drag-and-drop operation (e.g. compositor\ndependent timeouts to avoid stale drag-and-drop transfers).\n\nThe client should clean up and destroy this data source.\n\nFor objects of version 2 or older, wl_data_source.cancelled will\nonly be emitted if the data source was replaced by another data\nsource."]
     fn r#cancelled(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_source", "@{}.", "cancelled", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.commit(_key)
     }
     #[doc = "the drag-and-drop operation physically finished"]
@@ -1792,11 +1944,25 @@ pub trait r#WlDataSource<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The user performed the drop action. This event does not indicate\nacceptance, wl_data_source.cancelled may still be emitted afterwards\nif the drop destination does not accept any mime type.\n\nHowever, this event might however not be received if the compositor\ncancelled the drag-and-drop operation before this event could happen.\n\nNote that the data_source may still be used in the future and should\nnot be destroyed here."]
     fn r#dnd_drop_performed(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_source",
+                    "@{}.",
+                    "dnd_drop_performed",
+                    "(",
+                    ")"
+                ),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.commit(_key)
     }
     #[doc = "the drag-and-drop operation concluded"]
@@ -1805,11 +1971,18 @@ pub trait r#WlDataSource<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The drop destination finished interoperating with this data\nsource, so the client is now free to destroy this data source and\nfree all associated data.\n\nIf the action used to perform the operation was \"move\", the\nsource can now delete the transferred data."]
     fn r#dnd_finished(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_source", "@{}.", "dnd_finished", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.commit(_key)
     }
     #[doc = "notify the selected action"]
@@ -1821,12 +1994,20 @@ pub trait r#WlDataSource<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`dnd_action`: action selected by the compositor"]
     fn r#action(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#dnd_action: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_source", "@{}.", "action", "(", "{:?}", ")"),
+                _this.id(),
+                r#dnd_action,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.send_u32(r#dnd_action)?;
         _stream.commit(_key)
     }
@@ -2034,12 +2215,28 @@ pub trait r#WlDataDevice<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`id`: the new data_offer object"]
     fn r#data_offer(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#id: ::yutani::Id,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_device",
+                    "@{}.",
+                    "data_offer",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#id,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_object(Some(r#id))?;
         _stream.commit(_key)
     }
@@ -2054,16 +2251,40 @@ pub trait r#WlDataDevice<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`y`: surface-local y coordinate"]
     #[doc = "\n`id`: source data_offer object"]
     fn r#enter(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#surface: ::yutani::Id,
         r#x: ::yutani::Fixed,
         r#y: ::yutani::Fixed,
         r#id: ::core::option::Option<::yutani::Id>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_device",
+                    "@{}.",
+                    "enter",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#surface,
+                r#x,
+                r#y,
+                r#id,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#serial)?;
         _stream.send_object(Some(r#surface))?;
         _stream.send_fixed(r#x)?;
@@ -2075,11 +2296,18 @@ pub trait r#WlDataDevice<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This event is sent when the drag-and-drop pointer leaves the\nsurface and the session ends. The client must destroy the\nwl_data_offer introduced at enter time at this point."]
     fn r#leave(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_device", "@{}.", "leave", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.commit(_key)
     }
     #[doc = "drag-and-drop session motion"]
@@ -2091,14 +2319,34 @@ pub trait r#WlDataDevice<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`x`: surface-local x coordinate"]
     #[doc = "\n`y`: surface-local y coordinate"]
     fn r#motion(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#time: ::core::primitive::u32,
         r#x: ::yutani::Fixed,
         r#y: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_device",
+                    "@{}.",
+                    "motion",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#time,
+                r#x,
+                r#y,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.send_u32(r#time)?;
         _stream.send_fixed(r#x)?;
         _stream.send_fixed(r#y)?;
@@ -2108,11 +2356,18 @@ pub trait r#WlDataDevice<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The event is sent when a drag-and-drop operation is ended\nbecause the implicit grab is removed.\n\nThe drag-and-drop destination is expected to honor the last action\nreceived through wl_data_offer.action, if the resulting action is\n\"copy\" or \"move\", the destination can still perform\nwl_data_offer.receive requests, and is expected to end all\ntransfers with a wl_data_offer.finish request.\n\nIf the resulting action is \"ask\", the action will not be considered\nfinal. The drag-and-drop destination is expected to perform one last\nwl_data_offer.set_actions request, or wl_data_offer.destroy in order\nto cancel the operation."]
     fn r#drop(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_data_device", "@{}.", "drop", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.commit(_key)
     }
     #[doc = "advertise new selection"]
@@ -2122,12 +2377,28 @@ pub trait r#WlDataDevice<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`id`: selection data_offer object"]
     fn r#selection(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#id: ::core::option::Option<::yutani::Id>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_data_device",
+                    "@{}.",
+                    "selection",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#id,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.send_object(r#id)?;
         _stream.commit(_key)
     }
@@ -2879,12 +3150,20 @@ pub trait r#WlShellSurface<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`serial`: serial number of the ping"]
     fn r#ping(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_shell_surface", "@{}.", "ping", "(", "{:?}", ")"),
+                _this.id(),
+                r#serial,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#serial)?;
         _stream.commit(_key)
     }
@@ -2897,14 +3176,34 @@ pub trait r#WlShellSurface<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`width`: new width of the surface"]
     #[doc = "\n`height`: new height of the surface"]
     fn r#configure(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#edges: ::core::primitive::u32,
         r#width: ::core::primitive::i32,
         r#height: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_shell_surface",
+                    "@{}.",
+                    "configure",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#edges,
+                r#width,
+                r#height,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#edges)?;
         _stream.send_i32(r#width)?;
         _stream.send_i32(r#height)?;
@@ -2914,11 +3213,18 @@ pub trait r#WlShellSurface<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The popup_done event is sent out when a popup grab is broken,\nthat is, when the user clicks a surface that doesn't belong\nto the client owning the popup surface."]
     fn r#popup_done(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_shell_surface", "@{}.", "popup_done", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.commit(_key)
     }
 }
@@ -3453,12 +3759,20 @@ pub trait r#WlSurface<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`output`: output entered by the surface"]
     fn r#enter(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#output: ::yutani::Id,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_surface", "@{}.", "enter", "(", "{:?}", ")"),
+                _this.id(),
+                r#output,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_object(Some(r#output))?;
         _stream.commit(_key)
     }
@@ -3469,12 +3783,20 @@ pub trait r#WlSurface<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`output`: output left by the surface"]
     fn r#leave(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#output: ::yutani::Id,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_surface", "@{}.", "leave", "(", "{:?}", ")"),
+                _this.id(),
+                r#output,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_object(Some(r#output))?;
         _stream.commit(_key)
     }
@@ -3679,12 +4001,20 @@ pub trait r#WlSeat<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`capabilities`: capabilities of the seat"]
     fn r#capabilities(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#capabilities: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_seat", "@{}.", "capabilities", "(", "{:?}", ")"),
+                _this.id(),
+                r#capabilities,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#capabilities)?;
         _stream.commit(_key)
     }
@@ -3697,12 +4027,20 @@ pub trait r#WlSeat<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`name`: seat identifier"]
     fn r#name(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#name: &'_ ::core::primitive::str,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_seat", "@{}.", "name", "(", "{:?}", ")"),
+                _this.id(),
+                r#name,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_string(::core::option::Option::Some(r#name))?;
         _stream.commit(_key)
     }
@@ -3908,15 +4246,37 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`surface_x`: surface-local x coordinate"]
     #[doc = "\n`surface_y`: surface-local y coordinate"]
     fn r#enter(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#surface: ::yutani::Id,
         r#surface_x: ::yutani::Fixed,
         r#surface_y: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "enter",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#surface,
+                r#surface_x,
+                r#surface_y,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#serial)?;
         _stream.send_object(Some(r#surface))?;
         _stream.send_fixed(r#surface_x)?;
@@ -3931,13 +4291,31 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`serial`: serial number of the leave event"]
     #[doc = "\n`surface`: surface left by the pointer"]
     fn r#leave(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#surface: ::yutani::Id,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "leave",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#surface,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#serial)?;
         _stream.send_object(Some(r#surface))?;
         _stream.commit(_key)
@@ -3951,14 +4329,34 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`surface_x`: surface-local x coordinate"]
     #[doc = "\n`surface_y`: surface-local y coordinate"]
     fn r#motion(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#time: ::core::primitive::u32,
         r#surface_x: ::yutani::Fixed,
         r#surface_y: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "motion",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#time,
+                r#surface_x,
+                r#surface_y,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_u32(r#time)?;
         _stream.send_fixed(r#surface_x)?;
         _stream.send_fixed(r#surface_y)?;
@@ -3974,15 +4372,37 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`button`: button that produced the event"]
     #[doc = "\n`state`: physical state of the button"]
     fn r#button(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#time: ::core::primitive::u32,
         r#button: ::core::primitive::u32,
         r#state: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "button",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#time,
+                r#button,
+                r#state,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.send_u32(r#serial)?;
         _stream.send_u32(r#time)?;
         _stream.send_u32(r#button)?;
@@ -3998,14 +4418,34 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`axis`: axis type"]
     #[doc = "\n`value`: length of vector in surface-local coordinate space"]
     fn r#axis(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#time: ::core::primitive::u32,
         r#axis: ::core::primitive::u32,
         r#value: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "axis",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#time,
+                r#axis,
+                r#value,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.send_u32(r#time)?;
         _stream.send_u32(r#axis)?;
         _stream.send_fixed(r#value)?;
@@ -4017,11 +4457,18 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "Indicates the end of a set of events that logically belong together.\nA client is expected to accumulate the data in all events within the\nframe before proceeding.\n\nAll wl_pointer events before a wl_pointer.frame event belong\nlogically together. For example, in a diagonal scroll motion the\ncompositor will send an optional wl_pointer.axis_source event, two\nwl_pointer.axis events (horizontal and vertical) and finally a\nwl_pointer.frame event. The client may use this information to\ncalculate a diagonal vector for scrolling.\n\nWhen multiple wl_pointer.axis events occur within the same frame,\nthe motion vector is the combined motion of all events.\nWhen a wl_pointer.axis and a wl_pointer.axis_stop event occur within\nthe same frame, this indicates that axis movement in one axis has\nstopped but continues in the other axis.\nWhen multiple wl_pointer.axis_stop events occur within the same\nframe, this indicates that these axes stopped in the same instance.\n\nA wl_pointer.frame event is sent for every logical event group,\neven if the group only contains a single wl_pointer event.\nSpecifically, a client may get a sequence: motion, frame, button,\nframe, axis, frame, axis_stop, frame.\n\nThe wl_pointer.enter and wl_pointer.leave events are logical events\ngenerated by the compositor and not the hardware. These events are\nalso grouped by a wl_pointer.frame. When a pointer moves from one\nsurface to another, a compositor should group the\nwl_pointer.leave event within the same wl_pointer.frame.\nHowever, a client must not rely on wl_pointer.leave and\nwl_pointer.enter being in the same wl_pointer.frame.\nCompositor-specific policies may require the wl_pointer.leave and\nwl_pointer.enter event being split across multiple wl_pointer.frame\ngroups."]
     fn r#frame(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_pointer", "@{}.", "frame", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.commit(_key)
     }
     #[doc = "axis source event"]
@@ -4033,12 +4480,28 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`axis_source`: source of the axis event"]
     fn r#axis_source(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#axis_source: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 6u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "axis_source",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#axis_source,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 6u16);
         _stream.send_u32(r#axis_source)?;
         _stream.commit(_key)
     }
@@ -4052,13 +4515,31 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`time`: timestamp with millisecond granularity"]
     #[doc = "\n`axis`: the axis stopped with this event"]
     fn r#axis_stop(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#time: ::core::primitive::u32,
         r#axis: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 7u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "axis_stop",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#time,
+                r#axis,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 7u16);
         _stream.send_u32(r#time)?;
         _stream.send_u32(r#axis)?;
         _stream.commit(_key)
@@ -4073,13 +4554,31 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`axis`: axis type"]
     #[doc = "\n`discrete`: number of steps"]
     fn r#axis_discrete(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#axis: ::core::primitive::u32,
         r#discrete: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 8u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "axis_discrete",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#axis,
+                r#discrete,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 8u16);
         _stream.send_u32(r#axis)?;
         _stream.send_i32(r#discrete)?;
         _stream.commit(_key)
@@ -4094,13 +4593,31 @@ pub trait r#WlPointer<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`axis`: axis type"]
     #[doc = "\n`value120`: scroll distance as fraction of 120"]
     fn r#axis_value120(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#axis: ::core::primitive::u32,
         r#value120: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 9u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_pointer",
+                    "@{}.",
+                    "axis_value120",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#axis,
+                r#value120,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 9u16);
         _stream.send_u32(r#axis)?;
         _stream.send_i32(r#value120)?;
         _stream.commit(_key)
@@ -4318,14 +4835,34 @@ pub trait r#WlKeyboard<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`fd`: keymap file descriptor"]
     #[doc = "\n`size`: keymap size, in bytes"]
     fn r#keymap(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#format: ::core::primitive::u32,
         r#fd: ::yutani::Fd<'static>,
         r#size: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_keyboard",
+                    "@{}.",
+                    "keymap",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#format,
+                r#fd,
+                r#size,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#format)?;
         _stream.send_file(r#fd)?;
         _stream.send_u32(r#size)?;
@@ -4340,14 +4877,34 @@ pub trait r#WlKeyboard<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`surface`: surface gaining keyboard focus"]
     #[doc = "\n`keys`: the currently pressed keys"]
     fn r#enter(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#surface: ::yutani::Id,
         r#keys: &'_ [::core::primitive::u8],
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_keyboard",
+                    "@{}.",
+                    "enter",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#surface,
+                r#keys,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#serial)?;
         _stream.send_object(Some(r#surface))?;
         _stream.send_bytes(r#keys)?;
@@ -4361,13 +4918,31 @@ pub trait r#WlKeyboard<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`serial`: serial number of the leave event"]
     #[doc = "\n`surface`: surface that lost keyboard focus"]
     fn r#leave(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#surface: ::yutani::Id,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_keyboard",
+                    "@{}.",
+                    "leave",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#surface,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_u32(r#serial)?;
         _stream.send_object(Some(r#surface))?;
         _stream.commit(_key)
@@ -4382,15 +4957,37 @@ pub trait r#WlKeyboard<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`key`: key that produced the event"]
     #[doc = "\n`state`: physical state of the key"]
     fn r#key(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#time: ::core::primitive::u32,
         r#key: ::core::primitive::u32,
         r#state: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_keyboard",
+                    "@{}.",
+                    "key",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#time,
+                r#key,
+                r#state,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.send_u32(r#serial)?;
         _stream.send_u32(r#time)?;
         _stream.send_u32(r#key)?;
@@ -4408,16 +5005,40 @@ pub trait r#WlKeyboard<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`mods_locked`: locked modifiers"]
     #[doc = "\n`group`: keyboard layout"]
     fn r#modifiers(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#mods_depressed: ::core::primitive::u32,
         r#mods_latched: ::core::primitive::u32,
         r#mods_locked: ::core::primitive::u32,
         r#group: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_keyboard",
+                    "@{}.",
+                    "modifiers",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#mods_depressed,
+                r#mods_latched,
+                r#mods_locked,
+                r#group,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.send_u32(r#serial)?;
         _stream.send_u32(r#mods_depressed)?;
         _stream.send_u32(r#mods_latched)?;
@@ -4435,13 +5056,31 @@ pub trait r#WlKeyboard<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`rate`: the rate of repeating keys in characters per second"]
     #[doc = "\n`delay`: delay in milliseconds since key down until repeating starts"]
     fn r#repeat_info(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#rate: ::core::primitive::i32,
         r#delay: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_keyboard",
+                    "@{}.",
+                    "repeat_info",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#rate,
+                r#delay,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.send_i32(r#rate)?;
         _stream.send_i32(r#delay)?;
         _stream.commit(_key)
@@ -4594,8 +5233,8 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`x`: surface-local x coordinate"]
     #[doc = "\n`y`: surface-local y coordinate"]
     fn r#down(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#time: ::core::primitive::u32,
         r#surface: ::yutani::Id,
@@ -4603,8 +5242,24 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
         r#x: ::yutani::Fixed,
         r#y: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ", "wl_touch", "@{}.", "down", "(", "{:?}", ", {:?}", ", {:?}", ", {:?}",
+                    ", {:?}", ", {:?}", ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#time,
+                r#surface,
+                r#id,
+                r#x,
+                r#y,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#serial)?;
         _stream.send_u32(r#time)?;
         _stream.send_object(Some(r#surface))?;
@@ -4622,14 +5277,26 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`time`: timestamp with millisecond granularity"]
     #[doc = "\n`id`: the unique ID of this touch point"]
     fn r#up(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
         r#time: ::core::primitive::u32,
         r#id: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ", "wl_touch", "@{}.", "up", "(", "{:?}", ", {:?}", ", {:?}", ")"
+                ),
+                _this.id(),
+                r#serial,
+                r#time,
+                r#id,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#serial)?;
         _stream.send_u32(r#time)?;
         _stream.send_i32(r#id)?;
@@ -4645,15 +5312,29 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`x`: surface-local x coordinate"]
     #[doc = "\n`y`: surface-local y coordinate"]
     fn r#motion(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#time: ::core::primitive::u32,
         r#id: ::core::primitive::i32,
         r#x: ::yutani::Fixed,
         r#y: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ", "wl_touch", "@{}.", "motion", "(", "{:?}", ", {:?}", ", {:?}",
+                    ", {:?}", ")"
+                ),
+                _this.id(),
+                r#time,
+                r#id,
+                r#x,
+                r#y,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_u32(r#time)?;
         _stream.send_i32(r#id)?;
         _stream.send_fixed(r#x)?;
@@ -4664,22 +5345,36 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "Indicates the end of a set of events that logically belong together.\nA client is expected to accumulate the data in all events within the\nframe before proceeding.\n\nA wl_touch.frame terminates at least one event but otherwise no\nguarantee is provided about the set of events within a frame. A client\nmust assume that any state not updated in a frame is unchanged from the\npreviously known state."]
     fn r#frame(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_touch", "@{}.", "frame", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.commit(_key)
     }
     #[doc = "touch session cancelled"]
     #[doc = ""]
     #[doc = "Sent if the compositor decides the touch stream is a global\ngesture. No further events are sent to the clients from that\nparticular gesture. Touch cancellation applies to all touch points\ncurrently active on this client's surface. The client is\nresponsible for finalizing the touch points, future touch points on\nthis surface may reuse the touch point ID."]
     fn r#cancel(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_touch", "@{}.", "cancel", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.commit(_key)
     }
     #[doc = "update shape of touch point"]
@@ -4693,14 +5388,26 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`major`: length of the major axis in surface-local coordinates"]
     #[doc = "\n`minor`: length of the minor axis in surface-local coordinates"]
     fn r#shape(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#id: ::core::primitive::i32,
         r#major: ::yutani::Fixed,
         r#minor: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ", "wl_touch", "@{}.", "shape", "(", "{:?}", ", {:?}", ", {:?}", ")"
+                ),
+                _this.id(),
+                r#id,
+                r#major,
+                r#minor,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.send_i32(r#id)?;
         _stream.send_fixed(r#major)?;
         _stream.send_fixed(r#minor)?;
@@ -4716,13 +5423,31 @@ pub trait r#WlTouch<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`id`: the unique ID of this touch point"]
     #[doc = "\n`orientation`: angle between major axis and positive surface y-axis in degrees"]
     fn r#orientation(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#id: ::core::primitive::i32,
         r#orientation: ::yutani::Fixed,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 6u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_touch",
+                    "@{}.",
+                    "orientation",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#id,
+                r#orientation,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 6u16);
         _stream.send_i32(r#id)?;
         _stream.send_fixed(r#orientation)?;
         _stream.commit(_key)
@@ -4813,8 +5538,8 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`model`: textual description of the model"]
     #[doc = "\n`transform`: transform that maps framebuffer to output"]
     fn r#geometry(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#x: ::core::primitive::i32,
         r#y: ::core::primitive::i32,
         r#physical_width: ::core::primitive::i32,
@@ -4824,8 +5549,38 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
         r#model: &'_ ::core::primitive::str,
         r#transform: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_output",
+                    "@{}.",
+                    "geometry",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#x,
+                r#y,
+                r#physical_width,
+                r#physical_height,
+                r#subpixel,
+                r#make,
+                r#model,
+                r#transform,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_i32(r#x)?;
         _stream.send_i32(r#y)?;
         _stream.send_i32(r#physical_width)?;
@@ -4846,15 +5601,37 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`height`: height of the mode in hardware units"]
     #[doc = "\n`refresh`: vertical refresh rate in mHz"]
     fn r#mode(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#flags: ::core::primitive::u32,
         r#width: ::core::primitive::i32,
         r#height: ::core::primitive::i32,
         r#refresh: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "wl_output",
+                    "@{}.",
+                    "mode",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#flags,
+                r#width,
+                r#height,
+                r#refresh,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#flags)?;
         _stream.send_i32(r#width)?;
         _stream.send_i32(r#height)?;
@@ -4867,11 +5644,18 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This event is sent after all other properties have been\nsent after binding to the output object and after any\nother property changes done after that. This allows\nchanges to the output properties to be seen as\natomic, even if they happen via multiple events."]
     fn r#done(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_output", "@{}.", "done", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.commit(_key)
     }
     #[doc = "output scaling properties"]
@@ -4883,12 +5667,20 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`factor`: scaling factor of output"]
     fn r#scale(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#factor: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_output", "@{}.", "scale", "(", "{:?}", ")"),
+                _this.id(),
+                r#factor,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.send_i32(r#factor)?;
         _stream.commit(_key)
     }
@@ -4901,12 +5693,20 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`name`: output name"]
     fn r#name(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#name: &'_ ::core::primitive::str,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_output", "@{}.", "name", "(", "{:?}", ")"),
+                _this.id(),
+                r#name,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.send_string(::core::option::Option::Some(r#name))?;
         _stream.commit(_key)
     }
@@ -4919,12 +5719,20 @@ pub trait r#WlOutput<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`description`: output description"]
     fn r#description(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#description: &'_ ::core::primitive::str,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "wl_output", "@{}.", "description", "(", "{:?}", ")"),
+                _this.id(),
+                r#description,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.send_string(::core::option::Option::Some(r#description))?;
         _stream.commit(_key)
     }

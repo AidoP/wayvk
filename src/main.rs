@@ -61,47 +61,42 @@ impl<T: Copy + Clone + fmt::Debug + fmt::Display> fmt::Display for Vec2D<T> {
     }
 }
 
-
 /// A double-buffered object on which writes affect the pending state whilst reads use the commited state
 /// 
 /// Note: DerefMut is not implemented so that reads from the pending state cannot accidentally be done implicitly
-pub struct DoubleBuffer<T>([T; 2], usize);
-impl<T> DoubleBuffer<T> {
-    /// Swap the state
+pub struct DoubleBuffer<T>(T, T);
+impl<T: Clone> DoubleBuffer<T> {
+    /// Update the commited state with the pending state
     pub fn commit(&mut self) {
-        self.1 ^= 1;
+        self.0.clone_from(&self.1)
     }
     /// Mutably access the pending state
     pub fn pending(&mut self) -> &mut T {
-        &mut self.0[self.1 ^ 1]
-    }
-    /// Mutably access the commited state. Immutable access is available through `std::ops::Deref`
-    pub fn commited_mut(&mut self) -> &mut T {
-        &mut self.0[self.1]
+        &mut self.1
     }
 }
 impl<T: Default> Default for DoubleBuffer<T> {
     fn default() -> Self {
-        Self([T::default(), T::default()], 1)
+        Self(T::default(), T::default())
     }
 }
 impl<T> std::ops::Deref for DoubleBuffer<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
-        &self.0[self.1]
+        &self.0
     }
 }
 impl<T: Clone> Clone for DoubleBuffer<T> {
     fn clone(&self) -> Self {
-        Self(self.0.clone(), self.1)
+        Self(self.0.clone(), self.1.clone())
     }
 }
 impl<T: Copy> Copy for DoubleBuffer<T> {}
 impl<T: fmt::Debug> fmt::Debug for DoubleBuffer<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleBuffer")
-            .field("commited", &self.0[self.1])
-            .field("pending", &self.0[self.1 ^ 1])
+            .field("commited", &self.0)
+            .field("pending", &self.1)
             .finish()
     }
 }

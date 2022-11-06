@@ -13,6 +13,15 @@ type Resident = yutani::server::Resident<State>;
 
 pub mod prelude {
     pub use super::*;
+    pub use crate::DoubleBuffer;
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Geometry {
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32
 }
 
 pub struct Display;
@@ -27,6 +36,12 @@ impl Display {
             .into_versioned_object(id, version)
             .map(|object| object.into_any())
     }
+    pub fn delete_id(client: &mut Client, id: Id) -> Result<(), WlError<'static>> {
+        let stream = client.stream();
+        let key = stream.start_message(Id::DISPLAY, 1);
+        stream.send_object(Some(id))?;
+        stream.commit(key)
+    }
 }
 impl WlDisplay<State> for Display {
     fn sync(
@@ -36,13 +51,7 @@ impl WlDisplay<State> for Display {
         callback: Id,
     ) -> Result<(), WlError<'static>> {
         let serial = client.next_event();
-        let stream = client.stream();
-        // Send done event to the callback
-        let key = stream.start_message(callback, 0);
-        stream.send_u32(serial)?;
-        stream.commit(key)?;
-        // Delete the callback object
-        Self::delete_id(&mut this, client, callback.into())
+        Callback::done(client, callback, serial)
     }
 
     fn get_registry(
@@ -59,13 +68,29 @@ impl WlDisplay<State> for Display {
     }
 }
 
+pub struct Callback;
+impl Callback {
+    /// Send the `done` event to a virtual callback object.
+    /// The virtual callback object is released for reuse by the client and is therefore invalidated. 
+    pub fn done(client: &mut Client, id: Id, data: u32) -> Result<(), WlError<'static>> {
+        let stream = client.stream();
+        let key = stream.start_message(id, 0);
+        stream.send_u32(data)?;
+        stream.commit(key)?;
+        // Tell the client that it is safe to reuse the callback
+        Display::delete_id(client, id)
+    }
+}
+
 pub struct Registry;
 impl Registry {
     pub const WL_COMPOSITOR: u32 = 0;
     pub const WL_SHM: u32 = 1;
     pub const WL_DATA_DEVICE_MANAGER: u32 = 2;
+    pub const WL_SEAT: u32 = 3;
+    pub const WL_OUTPUT: u32 = 4;
     pub const WL_SUBCOMPOSITOR: u32 = 5;
-    pub const XDG_WM_BASE: u32 = 7;
+    pub const XDG_WM_BASE: u32 = 6;
     fn advertise(
         mut this: Lease<Self>,
         event_loop: &mut EventLoop,
@@ -111,16 +136,10 @@ impl WlRegistry<State> for Registry {
         id: NewId,
     ) -> Result<(), WlError<'static>> {
         match name {
-            Self::WL_COMPOSITOR => wl::Compositor
-                .into_versioned_object(id.id(), id.version())
-                .and_then(|o| client.insert(o.into_any())),
-            Self::WL_SHM => wl::Shm::create(client, id),
-            Self::WL_SUBCOMPOSITOR => wl::Subcompositor
-                .into_versioned_object(id.id(), id.version())
-                .and_then(|o| client.insert(o.into_any())),
-            Self::XDG_WM_BASE => xdg::WmBase
-                .into_versioned_object(id.id(), id.version())
-                .and_then(|o| client.insert(o.into_any())),
+            Self::WL_COMPOSITOR => wl::Compositor::new(client, id),
+            Self::WL_SHM => wl::Shm::new(client, id),
+            Self::WL_SUBCOMPOSITOR => wl::Subcompositor::new(client, id),
+            Self::XDG_WM_BASE => xdg::WmBase::new(client, id),
             _ => return Err(WlError::NO_GLOBAL),
         }
     }

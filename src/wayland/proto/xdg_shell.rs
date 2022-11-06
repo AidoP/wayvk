@@ -172,12 +172,20 @@ pub trait r#XdgWmBase<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`serial`: pass this to the pong request"]
     fn r#ping(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "xdg_wm_base", "@{}.", "ping", "(", "{:?}", ")"),
+                _this.id(),
+                r#serial,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#serial)?;
         _stream.commit(_key)
     }
@@ -1006,12 +1014,20 @@ pub trait r#XdgSurface<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`serial`: serial of the configure event"]
     fn r#configure(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#serial: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "xdg_surface", "@{}.", "configure", "(", "{:?}", ")"),
+                _this.id(),
+                r#serial,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#serial)?;
         _stream.commit(_key)
     }
@@ -1482,14 +1498,34 @@ pub trait r#XdgToplevel<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This configure event asks the client to resize its toplevel surface or\nto change its state. The configured state should not be applied\nimmediately. See xdg_surface.configure for details.\n\nThe width and height arguments specify a hint to the window\nabout how its surface should be resized in window geometry\ncoordinates. See set_window_geometry.\n\nIf the width or height arguments are zero, it means the client\nshould decide its own window dimension. This may happen when the\ncompositor needs to configure the state of the surface but doesn't\nhave any information about any previous or expected dimension.\n\nThe states listed in the event specify how the width/height\narguments should be interpreted, and possibly how it should be\ndrawn.\n\nClients must send an ack_configure in response to this event. See\nxdg_surface.configure and xdg_surface.ack_configure for details."]
     fn r#configure(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#width: ::core::primitive::i32,
         r#height: ::core::primitive::i32,
         r#states: &'_ [::core::primitive::u8],
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "xdg_toplevel",
+                    "@{}.",
+                    "configure",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#width,
+                r#height,
+                r#states,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_i32(r#width)?;
         _stream.send_i32(r#height)?;
         _stream.send_bytes(r#states)?;
@@ -1499,11 +1535,18 @@ pub trait r#XdgToplevel<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The close event is sent by the compositor when the user\nwants the surface to be closed. This should be equivalent to\nthe user clicking the close button in client-side decorations,\nif your application has any.\n\nThis is only a request that the user intends to close the\nwindow. The client may choose to ignore this request, or show\na dialog to ask the user to save their data, etc."]
     fn r#close(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "xdg_toplevel", "@{}.", "close", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.commit(_key)
     }
     #[doc = "recommended window geometry bounds"]
@@ -1512,13 +1555,31 @@ pub trait r#XdgToplevel<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The configure_bounds event may be sent prior to a xdg_toplevel.configure\nevent to communicate the bounds a window geometry size is recommended\nto constrain to.\n\nThe passed width and height are in surface coordinate space. If width\nand height are 0, it means bounds is unknown and equivalent to as if no\nconfigure_bounds event was ever sent for this surface.\n\nThe bounds can for example correspond to the size of a monitor excluding\nany panels or other shell components, so that a surface isn't created in\na way that it cannot fit.\n\nThe bounds may change at any point, and in such a case, a new\nxdg_toplevel.configure_bounds will be sent, followed by\nxdg_toplevel.configure and xdg_surface.configure."]
     fn r#configure_bounds(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#width: ::core::primitive::i32,
         r#height: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "xdg_toplevel",
+                    "@{}.",
+                    "configure_bounds",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#width,
+                r#height,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_i32(r#width)?;
         _stream.send_i32(r#height)?;
         _stream.commit(_key)
@@ -1532,12 +1593,28 @@ pub trait r#XdgToplevel<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`capabilities`: array of 32-bit capabilities"]
     fn r#wm_capabilities(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#capabilities: &'_ [::core::primitive::u8],
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "xdg_toplevel",
+                    "@{}.",
+                    "wm_capabilities",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#capabilities,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.send_bytes(r#capabilities)?;
         _stream.commit(_key)
     }
@@ -1886,15 +1963,37 @@ pub trait r#XdgPopup<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`width`: window geometry width"]
     #[doc = "\n`height`: window geometry height"]
     fn r#configure(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#x: ::core::primitive::i32,
         r#y: ::core::primitive::i32,
         r#width: ::core::primitive::i32,
         r#height: ::core::primitive::i32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "xdg_popup",
+                    "@{}.",
+                    "configure",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#x,
+                r#y,
+                r#width,
+                r#height,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_i32(r#x)?;
         _stream.send_i32(r#y)?;
         _stream.send_i32(r#width)?;
@@ -1905,11 +2004,18 @@ pub trait r#XdgPopup<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "The popup_done event is sent out when a popup is dismissed by the\ncompositor. The client should destroy the xdg_popup object at this\npoint."]
     fn r#popup_done(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(" -> ", "xdg_popup", "@{}.", "popup_done", "(", ")"),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.commit(_key)
     }
     #[doc = "signal the completion of a repositioned request"]
@@ -1921,12 +2027,28 @@ pub trait r#XdgPopup<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`token`: reposition request token"]
     fn r#repositioned(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#token: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "xdg_popup",
+                    "@{}.",
+                    "repositioned",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#token,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_u32(r#token)?;
         _stream.commit(_key)
     }

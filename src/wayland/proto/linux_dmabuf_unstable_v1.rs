@@ -185,12 +185,28 @@ pub trait r#ZwpLinuxDmabufV1<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`format`: DRM_FORMAT code"]
     fn r#format(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#format: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_v1",
+                    "@{}.",
+                    "format",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#format,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_u32(r#format)?;
         _stream.commit(_key)
     }
@@ -205,14 +221,34 @@ pub trait r#ZwpLinuxDmabufV1<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`modifier_hi`: high 32 bits of layout modifier"]
     #[doc = "\n`modifier_lo`: low 32 bits of layout modifier"]
     fn r#modifier(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#format: ::core::primitive::u32,
         r#modifier_hi: ::core::primitive::u32,
         r#modifier_lo: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_v1",
+                    "@{}.",
+                    "modifier",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#format,
+                r#modifier_hi,
+                r#modifier_lo,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_u32(r#format)?;
         _stream.send_u32(r#modifier_hi)?;
         _stream.send_u32(r#modifier_lo)?;
@@ -482,12 +518,28 @@ pub trait r#ZwpLinuxBufferParamsV1<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`buffer`: the newly created wl_buffer"]
     fn r#created(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#buffer: ::yutani::Id,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_buffer_params_v1",
+                    "@{}.",
+                    "created",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#buffer,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.send_object(Some(r#buffer))?;
         _stream.commit(_key)
     }
@@ -495,11 +547,25 @@ pub trait r#ZwpLinuxBufferParamsV1<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This event indicates that the attempted buffer creation has\nfailed. It usually means that one of the dmabuf constraints\nhas not been fulfilled.\n\nUpon receiving this event, the client should destroy the\nzlinux_buffer_params object."]
     fn r#failed(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_buffer_params_v1",
+                    "@{}.",
+                    "failed",
+                    "(",
+                    ")"
+                ),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.commit(_key)
     }
 }
@@ -665,11 +731,25 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This event is sent after all parameters of a wp_linux_dmabuf_feedback\nobject have been sent.\n\nThis allows changes to the wp_linux_dmabuf_feedback parameters to be\nseen as atomic, even if they happen via multiple events."]
     fn r#done(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 0u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "done",
+                    "(",
+                    ")"
+                ),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 0u16);
         _stream.commit(_key)
     }
     #[doc = "format and modifier table"]
@@ -680,13 +760,31 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = "\n`fd`: table file descriptor"]
     #[doc = "\n`size`: table size, in bytes"]
     fn r#format_table(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#fd: ::yutani::Fd<'static>,
         r#size: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 1u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "format_table",
+                    "(",
+                    "{:?}",
+                    ", {:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#fd,
+                r#size,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 1u16);
         _stream.send_file(r#fd)?;
         _stream.send_u32(r#size)?;
         _stream.commit(_key)
@@ -698,12 +796,28 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`device`: device dev_t value"]
     fn r#main_device(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#device: &'_ [::core::primitive::u8],
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 2u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "main_device",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#device,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 2u16);
         _stream.send_bytes(r#device)?;
         _stream.commit(_key)
     }
@@ -711,11 +825,25 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = ""]
     #[doc = "This event splits tranche_target_device and tranche_modifier events in\npreference tranches. It is sent after a set of tranche_target_device\nand tranche_modifier events; it represents the end of a tranche. The\nnext tranche will have a lower preference."]
     fn r#tranche_done(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 3u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "tranche_done",
+                    "(",
+                    ")"
+                ),
+                _this.id(),
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 3u16);
         _stream.commit(_key)
     }
     #[doc = "target device"]
@@ -725,12 +853,28 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`device`: device dev_t value"]
     fn r#tranche_target_device(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#device: &'_ [::core::primitive::u8],
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 4u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "tranche_target_device",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#device,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 4u16);
         _stream.send_bytes(r#device)?;
         _stream.commit(_key)
     }
@@ -741,12 +885,28 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`indices`: array of 16-bit indexes"]
     fn r#tranche_formats(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#indices: &'_ [::core::primitive::u8],
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 5u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "tranche_formats",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#indices,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 5u16);
         _stream.send_bytes(r#indices)?;
         _stream.commit(_key)
     }
@@ -757,12 +917,28 @@ pub trait r#ZwpLinuxDmabufFeedbackV1<T>: 'static + ::core::marker::Sized {
     #[doc = "## Arguments"]
     #[doc = "\n`flags`: tranche flags"]
     fn r#tranche_flags(
-        this: &mut ::yutani::lease::Lease<Self>,
-        client: &mut ::yutani::server::Client<T>,
+        _this: &mut ::yutani::lease::Lease<Self>,
+        _client: &mut ::yutani::server::Client<T>,
         r#flags: ::core::primitive::u32,
     ) -> ::core::result::Result<(), ::yutani::wire::WlError<'static>> {
-        let _stream = client.stream();
-        let _key = _stream.start_message(this.id(), 6u16);
+        #[cfg(debug_assertions)]
+        {
+            ::std::println!(
+                ::std::concat!(
+                    " -> ",
+                    "zwp_linux_dmabuf_feedback_v1",
+                    "@{}.",
+                    "tranche_flags",
+                    "(",
+                    "{:?}",
+                    ")"
+                ),
+                _this.id(),
+                r#flags,
+            );
+        }
+        let _stream = _client.stream();
+        let _key = _stream.start_message(_this.id(), 6u16);
         _stream.send_u32(r#flags)?;
         _stream.commit(_key)
     }
